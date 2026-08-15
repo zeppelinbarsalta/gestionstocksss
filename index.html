@@ -41,6 +41,14 @@
   nav.tabs button.active{background:var(--magenta);border-color:var(--magenta);color:#fff}
   nav.tabs button .n{display:inline-block;min-width:20px;text-align:center;background:rgba(255,255,255,.14);border-radius:6px;padding:1px 5px;margin-left:7px;font-size:11px}
   nav.tabs button.active .n{background:rgba(0,0,0,.22)}
+  .syncchip{margin-left:auto;align-self:center;display:inline-flex;align-items:center;gap:7px;font-size:12.5px;font-weight:500;color:var(--muted);padding:7px 13px;border-radius:999px;border:1px solid var(--line-2);white-space:nowrap;cursor:pointer;user-select:none;transition:.15s}
+  .syncchip:hover{border-color:var(--text)}
+  .syncchip .dot{width:8px;height:8px;border-radius:50%;background:var(--muted);flex:none}
+  .syncchip.saved{color:var(--ok);border-color:rgba(46,194,126,.45)} .syncchip.saved .dot{background:var(--ok)}
+  .syncchip.saving{color:var(--magenta-soft);border-color:rgba(221,1,208,.45)} .syncchip.saving .dot{background:var(--magenta-soft);animation:syncpulse 1s infinite}
+  .syncchip.pending{color:var(--warn);border-color:rgba(255,176,32,.45)} .syncchip.pending .dot{background:var(--warn)}
+  .syncchip.error{color:var(--bad);border-color:rgba(255,84,112,.55)} .syncchip.error .dot{background:var(--bad)}
+  @keyframes syncpulse{0%,100%{opacity:1}50%{opacity:.3}}
 
   .panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:22px}
   .panel + .panel{margin-top:18px}
@@ -152,6 +160,7 @@
     <button data-tab="prov">3 · Proveedores <span class="n" id="nProv">0</span></button>
     <button data-tab="orden">4 · Órdenes <span class="n" id="nOrden">0</span></button>
     <button data-tab="wa">5 · WhatsApp <span class="n" id="nWa">0</span></button>
+    <span id="syncChip" class="syncchip" title="Estado de sincronización con la nube — clic para guardar ahora"><span class="dot"></span><span class="label">…</span></span>
   </nav>
 
   <!-- ============ TAB 1: CARGAR ============ -->
@@ -167,6 +176,7 @@
         <button class="btn sm" id="cloudSaveBtn">Guardar conexión</button>
         <button class="btn ghost sm" id="cloudPullBtn">Bajar de la nube</button>
         <button class="btn ghost sm" id="cloudPushBtn">Subir a la nube</button>
+        <button class="btn ghost sm" id="cloudTestBtn">Probar conexión</button>
         <label class="chk"><input type="checkbox" id="cloudAuto" checked> Sincronizar automático</label>
         <span class="hint" id="cloudStatus">Sin conectar</span>
       </div>
@@ -850,9 +860,22 @@
   const DEFAULT_CLOUD_KEY="";
   function cloudCfg(){ const u=(localStorage.getItem(LS_CLOUD_URL)||DEFAULT_CLOUD_URL).trim(); const stored=localStorage.getItem(LS_CLOUD_KEY); const k=(stored!=null&&stored!=="")?stored:DEFAULT_CLOUD_KEY; return u?{url:u,clave:k}:null; }
   function setStatus(msg,cls){ const el=$("#cloudStatus"); if(!el)return; el.textContent=msg; el.style.color=(cls==="ok")?"var(--ok)":(cls==="bad")?"var(--bad)":"var(--muted)"; }
+  function setSync(state){
+    const el=$("#syncChip"); if(!el)return;
+    el.classList.remove("saved","saving","pending","error");
+    const map={ saved:["saved","Guardado"], saving:["saving","Guardando…"], pending:["pending","Sin guardar"], error:["error","Error al guardar"], offline:["","Sin nube"] };
+    const m=map[state]||map.offline;
+    if(m[0]) el.classList.add(m[0]);
+    const lbl=el.querySelector(".label"); if(lbl) lbl.textContent=m[1];
+  }
 
   let pushT, cloudDirty=false;
-  function queuePush(){ if(!cloudCfg())return; const a=$("#cloudAuto"); if(a&&!a.checked)return; cloudDirty=true; clearTimeout(pushT); setStatus("cambios sin guardar…"); pushT=setTimeout(()=>cloudPush(),900); }
+  function queuePush(){
+    if(!cloudCfg()){ setSync("offline"); return; }
+    cloudDirty=true; setSync("pending"); setStatus("cambios sin guardar…");
+    const a=$("#cloudAuto"); if(a&&!a.checked) return; // auto apagado: queda pendiente hasta que toques el chip o "Subir a la nube"
+    clearTimeout(pushT); pushT=setTimeout(()=>cloudPush(),900);
+  }
 
   function buildCloudPayload(){
     const c=cloudCfg();
@@ -878,17 +901,17 @@
   window.addEventListener("beforeunload",flushBeacon);
 
   async function cloudPull(silent){
-    const c=cloudCfg(); if(!c){ if(!silent)toast("Configurá la URL y la clave primero."); return; }
-    setStatus("bajando…");
+    const c=cloudCfg(); if(!c){ if(!silent)toast("Configurá la URL y la clave primero."); setSync("offline"); return; }
+    setStatus("bajando…"); setSync("saving");
     try{
       const r=await fetch(c.url+"?clave="+encodeURIComponent(c.clave)+"&t="+Date.now());
       const j=await r.json();
       if(!j.ok) throw new Error(j.error||"error");
       applyRemote(j.data||{});
       reconcilePending();
-      setStatus("actualizado desde la nube ✓","ok");
+      setStatus("actualizado desde la nube ✓","ok"); if(!cloudDirty) setSync("saved");
       if(!silent)toast("Datos bajados de la nube.");
-    }catch(e){ setStatus("error al bajar: "+e.message,"bad"); if(!silent)toast("No se pudo bajar de la nube. Revisá URL y clave."); }
+    }catch(e){ setStatus("error al bajar: "+e.message,"bad"); setSync("error"); if(!silent)toast("No se pudo bajar de la nube. Revisá URL y clave."); }
   }
 
   // Reaplica los pisos editados que no se llegaron a subir, y los re-sincroniza. Garantiza que ningún cambio se pierda.
@@ -929,14 +952,14 @@
 
   async function cloudPush(){
     const c=cloudCfg(); if(!c)return;
-    setStatus("subiendo…");
+    setStatus("subiendo…"); setSync("saving");
     try{
       const r=await fetch(c.url,{ method:"POST", headers:{"Content-Type":"text/plain;charset=utf-8"}, body:JSON.stringify(buildCloudPayload()) });
       const j=await r.json();
       if(!j.ok) throw new Error(j.error||"error");
       cloudDirty=false; pisoPending={}; try{localStorage.setItem(LS_PENDING,"{}");}catch(e){}
-      setStatus("guardado en la nube ✓","ok");
-    }catch(e){ setStatus("error al subir: "+e.message,"bad"); }
+      setStatus("guardado en la nube ✓","ok"); setSync("saved");
+    }catch(e){ setStatus("error al subir: "+e.message,"bad"); setSync("error"); }
   }
 
   $("#cloudSaveBtn").addEventListener("click",()=>{
@@ -946,6 +969,30 @@
   });
   $("#cloudPullBtn").addEventListener("click",()=>cloudPull(false));
   $("#cloudPushBtn").addEventListener("click",()=>cloudPush());
+  $("#cloudTestBtn").addEventListener("click",()=>cloudTest());
+  $("#syncChip").addEventListener("click",()=>cloudPush());
+
+  async function cloudTest(){
+    const c=cloudCfg(); if(!c){ setStatus("Falta la URL.","bad"); return; }
+    const token="t"+Date.now();
+    setStatus("Probando: escribiendo marca de prueba…");
+    // Enviamos SOLO config (con todas sus claves actuales + la marca de prueba). NO tocamos piso/prov/pedir.
+    const cfg=buildCloudPayload().data.config; cfg.__test__=token;
+    try{
+      await fetch(c.url,{ method:"POST", headers:{"Content-Type":"text/plain;charset=utf-8"}, body:JSON.stringify({clave:c.clave,data:{config:cfg}}) });
+      setStatus("Probando: leyendo de vuelta…");
+      const rg=await fetch(c.url+"?clave="+encodeURIComponent(c.clave)+"&t="+Date.now());
+      const jg=await rg.json();
+      if(jg&&jg.ok&&jg.data&&jg.data.config&&jg.data.config.__test__===token){
+        setStatus("✓ Escritura y lectura OK — la nube guarda bien. El problema era otro (probablemente no habías tocado 'Subir a la nube').","ok");
+        toast("Conexión perfecta: la nube guarda.");
+      } else if(jg&&jg.ok){
+        setStatus("✗ LEE pero NO ESCRIBE: el POST no impacta en la hoja. Es el deployment (revisar 'Ejecutar como: Yo' + volver a implementar versión nueva).","bad");
+      } else {
+        setStatus("✗ No pude leer la nube: "+((jg&&jg.error)||"error")+".","bad");
+      }
+    }catch(e){ setStatus("✗ Falló la conexión de red: "+e.message+" (posible CORS o URL mal).","bad"); }
+  }
   $("#cloudAuto").addEventListener("change",()=>localStorage.setItem(LS_CLOUD_AUTO,$("#cloudAuto").checked?"1":"0"));
 
   /* ---------- SEMILLA de stock de piso (última actualización provista por Fernando) ---------- */
