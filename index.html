@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html lang="es-AR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reposición · Salta Sex Shop</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@1,900&family=DM+Sans:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --magenta:#DD01D0;
+    --magenta-soft:#ff3af0;
+    --ink:#0A0A0A;
+    --panel:#141216;
+    --panel-2:#1c191f;
+    --line:#2a262e;
+    --line-2:#3a343f;
+    --text:#f3eef4;
+    --muted:#9a8fa0;
+    --ok:#2ec27e;
+    --warn:#ffb020;
+    --bad:#ff5470;
+    --radius:14px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{background:var(--ink);color:var(--text);font-family:'DM Sans',system-ui,sans-serif;font-weight:300;-webkit-font-smoothing:antialiased}
+  a{color:var(--magenta-soft)}
+  .wrap{max-width:1220px;margin:0 auto;padding:26px 22px 90px}
+
+  header.top{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;flex-wrap:wrap;border-bottom:1px solid var(--line);padding-bottom:18px;margin-bottom:22px}
+  .brand h1{font-family:'Playfair Display',serif;font-style:italic;font-weight:900;font-size:clamp(26px,4vw,40px);line-height:.95;letter-spacing:-.5px}
+  .brand h1 span{color:var(--magenta)}
+  .brand p{color:var(--muted);font-size:13px;margin-top:6px;letter-spacing:.3px}
+  .statechip{font-size:12px;color:var(--muted);text-align:right;line-height:1.5}
+  .statechip b{color:var(--text);font-weight:500}
+
+  nav.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:24px}
+  nav.tabs button{background:var(--panel);border:1px solid var(--line);color:var(--muted);padding:10px 16px;border-radius:999px;font-family:'DM Sans';font-size:13.5px;font-weight:500;cursor:pointer;transition:.15s}
+  nav.tabs button:hover{border-color:var(--line-2);color:var(--text)}
+  nav.tabs button.active{background:var(--magenta);border-color:var(--magenta);color:#fff}
+  nav.tabs button .n{display:inline-block;min-width:20px;text-align:center;background:rgba(255,255,255,.14);border-radius:6px;padding:1px 5px;margin-left:7px;font-size:11px}
+  nav.tabs button.active .n{background:rgba(0,0,0,.22)}
+
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:22px}
+  .panel + .panel{margin-top:18px}
+  h2.sec{font-family:'Playfair Display',serif;font-style:italic;font-weight:900;font-size:22px;margin-bottom:4px}
+  .sub{color:var(--muted);font-size:13.5px;margin-bottom:18px;max-width:70ch;line-height:1.5}
+
+  .btn{display:inline-flex;align-items:center;gap:8px;background:var(--magenta);color:#fff;border:none;padding:11px 18px;border-radius:10px;font-family:'DM Sans';font-weight:500;font-size:14px;cursor:pointer;transition:.15s}
+  .btn:hover{filter:brightness(1.08)}
+  .btn.ghost{background:transparent;border:1px solid var(--line-2);color:var(--text)}
+  .btn.ghost:hover{border-color:var(--magenta);color:var(--magenta-soft)}
+  .btn.sm{padding:7px 12px;font-size:12.5px;border-radius:8px}
+  .btn:disabled{opacity:.4;cursor:not-allowed;filter:none}
+
+  .drop{border:2px dashed var(--line-2);border-radius:var(--radius);padding:40px 20px;text-align:center;color:var(--muted);transition:.15s;cursor:pointer}
+  .drop:hover,.drop.drag{border-color:var(--magenta);color:var(--text);background:rgba(221,1,208,.05)}
+  .drop b{color:var(--text);font-weight:500}
+  .drop small{display:block;margin-top:8px;font-size:12px}
+
+  .grid-map{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-top:6px}
+  .field label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:.6px}
+  select,input[type=text],input[type=number]{width:100%;background:var(--panel-2);border:1px solid var(--line-2);color:var(--text);border-radius:9px;padding:9px 11px;font-family:'DM Sans';font-size:14px}
+  select:focus,input:focus{outline:none;border-color:var(--magenta)}
+  input[type=number]{text-align:right}
+
+  .toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:16px}
+  .toolbar .search{flex:1;min-width:200px}
+  .toolbar .spacer{flex:1}
+  .chk{display:inline-flex;align-items:center;gap:8px;font-size:13.5px;color:var(--muted);cursor:pointer;user-select:none}
+  .chk input{width:16px;height:16px;accent-color:var(--magenta)}
+
+  .tablewrap{overflow:auto;border:1px solid var(--line);border-radius:12px;max-height:62vh}
+  table{width:100%;border-collapse:collapse;font-size:13.5px}
+  thead th{position:sticky;top:0;background:var(--panel-2);text-align:left;padding:11px 12px;font-weight:500;color:var(--muted);border-bottom:1px solid var(--line);white-space:nowrap;z-index:2}
+  #pisoTable thead th[data-sort]{cursor:pointer;user-select:none;transition:color .12s}
+  #pisoTable thead th[data-sort]:hover{color:var(--text)}
+  thead th.num{text-align:right}
+  tbody td{padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:middle}
+  tbody tr:hover{background:rgba(255,255,255,.02)}
+  td.num{text-align:right;font-variant-numeric:tabular-nums}
+  td.name{max-width:340px}
+  td.name b{font-weight:500}
+  td.name small{color:var(--muted);display:block;font-size:11.5px}
+  .pill{display:inline-block;font-size:11px;padding:2px 8px;border-radius:999px;border:1px solid var(--line-2);color:var(--muted)}
+  .cellinput{width:84px;background:var(--panel-2);border:1px solid var(--line-2);color:var(--text);border-radius:7px;padding:6px 8px;text-align:right;font-size:13px}
+  .cellinput:focus{outline:none;border-color:var(--magenta)}
+  .cellinput.set{border-color:rgba(221,1,208,.55)}
+  .cellinput.pedir{width:76px;color:var(--magenta-soft);font-weight:500}
+  .cellinput.pedir.set{background:rgba(221,1,208,.12);border-color:var(--magenta)}
+  input.ptext.echo{border-color:var(--warn);background:rgba(255,176,32,.08)}
+  .badge-need{color:var(--warn);font-weight:500}
+  .badge-ok{color:var(--muted)}
+  .neg{color:var(--bad)}
+
+  .stats{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px}
+  .stat{background:var(--panel-2);border:1px solid var(--line);border-radius:12px;padding:12px 16px;min-width:130px}
+  .stat .k{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px}
+  .stat .v{font-family:'Playfair Display',serif;font-style:italic;font-weight:900;font-size:26px;margin-top:2px}
+  .stat .v.mag{color:var(--magenta-soft)}
+
+  .grouphead{display:flex;align-items:center;justify-content:space-between;gap:12px;background:var(--panel-2);border:1px solid var(--line);border-left:3px solid var(--magenta);border-radius:10px;padding:12px 16px;margin:18px 0 0}
+  .grouphead h3{font-size:16px;font-weight:500}
+  .grouphead .meta{font-size:12.5px;color:var(--muted)}
+  .grouphead .meta b{color:var(--text);font-weight:500}
+
+  .empty{text-align:center;color:var(--muted);padding:44px 16px;font-size:14px}
+  .empty b{color:var(--text);display:block;font-size:16px;margin-bottom:6px;font-weight:500}
+
+  .hint{font-size:12.5px;color:var(--muted);margin-top:10px;line-height:1.5}
+  .hint code{background:var(--panel-2);border:1px solid var(--line);padding:1px 6px;border-radius:5px;color:var(--magenta-soft);font-size:12px}
+
+  .row-actions{display:flex;gap:8px;flex-wrap:wrap}
+  .danger{color:var(--bad)}
+  .toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--panel-2);border:1px solid var(--line-2);color:var(--text);padding:12px 20px;border-radius:10px;font-size:13.5px;opacity:0;pointer-events:none;transition:.25s;z-index:99}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  .hidden{display:none!important}
+
+  @media print{
+    body{background:#fff;color:#111}
+    .wrap{max-width:100%;padding:0}
+    nav.tabs,header.top,.toolbar,.no-print,.drop{display:none!important}
+    .panel{border:none;background:#fff;padding:0}
+    .grouphead{background:#f4f4f4;border-color:#ddd;border-left:3px solid var(--magenta);color:#111}
+    .grouphead h3,.grouphead .meta,.grouphead .meta b{color:#111}
+    .tablewrap{max-height:none;border-color:#ccc}
+    thead th{background:#f4f4f4;color:#333;border-color:#ccc}
+    tbody td{border-color:#e2e2e2}
+    h2.sec,.stat .v{color:#111}
+    .stat{border-color:#ddd;background:#fafafa}
+    .print-title{display:block!important}
+  }
+  .print-title{display:none;font-family:'Playfair Display',serif;font-style:italic;font-weight:900;font-size:24px;margin-bottom:4px}
+  .print-title small{display:block;font-family:'DM Sans';font-style:normal;font-weight:400;font-size:12px;color:#555;margin-top:4px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <h1>Reposición <span>·</span> Salta Sex Shop</h1>
+      <p>Compará stock actual contra stock de piso y generá órdenes de compra por marca o proveedor.</p>
+    </div>
+    <div class="statechip" id="statechip">Sin datos cargados</div>
+  </header>
+
+  <nav class="tabs" id="tabs">
+    <button data-tab="cargar" class="active">1 · Cargar stock</button>
+    <button data-tab="piso">2 · Stock de piso <span class="n" id="nPiso">0</span></button>
+    <button data-tab="prov">3 · Proveedores <span class="n" id="nProv">0</span></button>
+    <button data-tab="orden">4 · Órdenes <span class="n" id="nOrden">0</span></button>
+  </nav>
+
+  <!-- ============ TAB 1: CARGAR ============ -->
+  <section id="tab-cargar">
+    <div class="panel" id="cloudPanel">
+      <h2 class="sec" style="font-size:19px">Sincronización en la nube</h2>
+      <p class="sub">Ya está conectada a tu hoja de Google. El stock de piso, los proveedores y las cantidades se guardan en la nube y aparecen en todos tus dispositivos, sin que toques nada. La clave es opcional (dejala vacía).</p>
+      <div class="grid-map">
+        <div class="field" style="grid-column:1/-1"><label>URL del Web App (ya configurada)</label><input type="text" id="cloudUrl" placeholder="https://script.google.com/macros/s/…/exec"></div>
+        <div class="field"><label>Clave (opcional)</label><input type="text" id="cloudKey" placeholder="dejar vacío"></div>
+      </div>
+      <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+        <button class="btn sm" id="cloudSaveBtn">Guardar conexión</button>
+        <button class="btn ghost sm" id="cloudPullBtn">Bajar de la nube</button>
+        <button class="btn ghost sm" id="cloudPushBtn">Subir a la nube</button>
+        <label class="chk"><input type="checkbox" id="cloudAuto" checked> Sincronizar automático</label>
+        <span class="hint" id="cloudStatus">Sin conectar</span>
+      </div>
+    </div>
+    <div class="panel">
+      <h2 class="sec">Cargar stock actual</h2>
+      <p class="sub">Subí el CSV de stock de Tienda Nube. El sistema detecta el delimitador y las columnas automáticamente; después confirmás el mapeo. El stock de piso y los proveedores que cargues quedan guardados, así que solo re-subís este archivo cada vez que quieras recalcular.</p>
+      <div class="drop" id="drop">
+        <b>Arrastrá el CSV acá</b> o hacé clic para elegir el archivo
+        <small>.csv exportado de Tienda Nube (o cualquier CSV con SKU, nombre, marca y stock)</small>
+      </div>
+      <input type="file" id="file" accept=".csv,text/csv" class="hidden">
+
+      <div id="mapArea" class="hidden" style="margin-top:22px">
+        <h2 class="sec" style="font-size:18px">Mapeo de columnas</h2>
+        <p class="sub" style="margin-bottom:12px">Confirmá qué columna corresponde a cada campo. Lo que detecté está preseleccionado.</p>
+        <div class="grid-map">
+          <div class="field"><label>SKU / Código</label><select id="colSku"></select></div>
+          <div class="field"><label>Nombre</label><select id="colName"></select></div>
+          <div class="field"><label>Marca</label><select id="colBrand"></select></div>
+          <div class="field"><label>Stock actual</label><select id="colStock"></select></div>
+          <div class="field"><label>Proveedor (opcional)</label><select id="colProv"></select></div>
+        </div>
+        <div style="margin-top:14px;display:flex;gap:16px;flex-wrap:wrap;align-items:center">
+          <label class="chk"><input type="checkbox" id="ffill" checked> Rellenar Marca/Nombre vacíos con la fila de arriba (variantes)</label>
+        </div>
+        <div style="margin-top:18px;display:flex;gap:10px;flex-wrap:wrap">
+          <button class="btn" id="applyMap">Cargar artículos</button>
+          <span class="hint" id="mapInfo"></span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ TAB 2: PISO ============ -->
+  <section id="tab-piso" class="hidden">
+    <div class="panel">
+      <h2 class="sec">Stock de piso (nivel objetivo)</h2>
+      <p class="sub">Definí para cada artículo cuánto querés mantener en piso. La reposición es <code style="background:var(--panel-2);padding:1px 6px;border-radius:5px">piso − actual</code>. Se guarda automáticamente por SKU y persiste entre cargas de CSV. Cargalo una vez y listo.</p>
+      <div class="toolbar no-print">
+        <div class="search"><input type="text" id="pisoSearch" placeholder="Buscar por nombre, SKU o marca…"></div>
+        <label class="chk"><input type="checkbox" id="pisoOnlyUnset"> Solo sin piso definido</label>
+        <div class="spacer"></div>
+        <button class="btn ghost sm" id="bulkPisoBtn">Fijar piso a filtrados…</button>
+        <button class="btn ghost sm" id="importPisoBtn">Importar piso (CSV)</button>
+        <button class="btn ghost sm" id="exportPisoBtn">Exportar piso (CSV)</button>
+        <input type="file" id="importPisoFile" accept=".csv" class="hidden">
+      </div>
+      <div class="tablewrap">
+        <table id="pisoTable">
+          <thead>
+            <tr>
+              <th data-sort="name">Artículo</th><th data-sort="brand">Marca</th>
+              <th class="num" data-sort="actual">Actual</th><th class="num" data-sort="piso">Piso</th><th class="num" data-sort="need">Repone</th>
+            </tr>
+          </thead>
+          <tbody id="pisoBody"></tbody>
+        </table>
+      </div>
+      <p class="hint" id="pisoCount"></p>
+    </div>
+  </section>
+
+  <!-- ============ TAB 3: PROVEEDORES ============ -->
+  <section id="tab-prov" class="hidden">
+    <div class="panel">
+      <h2 class="sec">Marca → Proveedor</h2>
+      <p class="sub">Tienda Nube exporta la marca pero casi nunca el proveedor. Asigná a cada marca su distribuidor para poder agrupar las órdenes por proveedor. Se guarda y persiste. <b style="color:var(--text);font-weight:500">Lo que cargues acá manda siempre</b>; si una marca queda sin mapear y el CSV trae columna de proveedor, se usa esa solo como respaldo.</p>
+      <div class="toolbar no-print">
+        <div class="search"><input type="text" id="provSearch" placeholder="Buscar marca…"></div>
+        <label class="chk"><input type="checkbox" id="provOnlyUnset"> Solo sin proveedor</label>
+        <label class="chk"><input type="checkbox" id="provEchoOnly"> Solo proveedor = marca (revisar)</label>
+      </div>
+      <div class="tablewrap">
+        <table id="provTable">
+          <thead><tr><th>Marca</th><th class="num">Artículos</th><th>Proveedor</th></tr></thead>
+          <tbody id="provBody"></tbody>
+        </table>
+      </div>
+      <p class="hint" id="provCount"></p>
+    </div>
+  </section>
+
+  <!-- ============ TAB 4: ORDENES ============ -->
+  <section id="tab-orden" class="hidden">
+    <div class="panel">
+      <div class="toolbar no-print" style="margin-bottom:20px">
+        <div class="field" style="min-width:180px">
+          <label>Agrupar por</label>
+          <select id="groupBy"><option value="prov">Proveedor</option><option value="brand">Marca</option></select>
+        </div>
+        <div class="spacer"></div>
+        <button class="btn ghost sm" id="resetPedirBtn">Restablecer cantidades</button>
+        <button class="btn ghost sm" id="exportOrdenBtn">Exportar orden (CSV)</button>
+        <button class="btn sm" id="printOrdenBtn">Imprimir / PDF</button>
+      </div>
+      <div class="print-title" id="printTitle">Orden de compra · Salta Sex Shop<small id="printSub"></small></div>
+      <div class="stats" id="ordenStats"></div>
+      <div id="ordenBody"></div>
+    </div>
+  </section>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  "use strict";
+  const LS_PISO="ss_repos_piso_v1";
+  const LS_PROV="ss_repos_prov_v1";
+  const LS_MAP="ss_repos_map_v1";
+  const LS_PEDIR="ss_repos_pedir_v1";
+  const LS_PISOMETA="ss_repos_pisometa_v1";
+  const LS_BRANDDISP="ss_repos_branddisp_v1";
+  const LS_CLOUD_URL="ss_repos_cloud_url";
+  const LS_CLOUD_KEY="ss_repos_cloud_key";
+  const LS_CLOUD_AUTO="ss_repos_cloud_auto";
+
+  const $=s=>document.querySelector(s);
+  const $$=s=>Array.from(document.querySelectorAll(s));
+  const norm=s=>(s||"").toString().normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().trim();
+  const toInt=v=>{ if(v==null)return 0; const n=parseInt(v.toString().replace(/[^\d\-]/g,""),10); return isNaN(n)?0:n; };
+  const esc=s=>(s==null?"":s.toString()).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+  let ITEMS=[];          // {sku,name,brand,prov,actual}
+  let pisoSort={col:null,dir:1};  // ordenamiento de la tabla Stock de piso
+  let HEADERS=[];
+  let RAW=[];            // array of row objects
+  let piso=load(LS_PISO,{});     // sku -> number
+  let provMap=load(LS_PROV,{});  // brand(norm) -> proveedor string  (display key = original brand)
+  let pedir=load(LS_PEDIR,{});   // sku -> cantidad manual a pedir (override del cálculo automático)
+  let pisoMeta=load(LS_PISOMETA,{}); // sku -> {n:nombre, m:marca}  (para que la hoja sea legible)
+  let brandDisplay=load(LS_BRANDDISP,{});   // normBrand -> texto original de la marca
+  let applyingRemote=false;      // evita reenviar a la nube lo que acabamos de bajar
+
+  function load(k,def){ try{const v=localStorage.getItem(k);return v?JSON.parse(v):def;}catch(e){return def;} }
+  function save(k,v){
+    try{localStorage.setItem(k,JSON.stringify(v));}catch(e){toast("No se pudo guardar (localStorage). Abrí el archivo guardado en tu navegador.");}
+    if(!applyingRemote && (k===LS_PISO||k===LS_PROV||k===LS_PEDIR||k===LS_MAP)) queuePush();
+  }
+  let toastT;
+  function toast(msg){ const t=$("#toast"); t.textContent=msg; t.classList.add("show"); clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove("show"),2600); }
+
+  /* ---------- CSV parse ---------- */
+  function detectDelim(line){
+    const c=[",",";","\t","|"]; let best=",",bc=-1;
+    for(const d of c){ const n=line.split(d).length; if(n>bc){bc=n;best=d;} }
+    return best;
+  }
+  function parseCSV(text){
+    text=text.replace(/^\uFEFF/,"");
+    const nl=text.indexOf("\n");
+    const header=(nl>=0?text.slice(0,nl):text).replace(/\r$/,"");
+    const delim=detectDelim(header);
+    const rows=[]; let cur=[],field="",inQ=false;
+    for(let i=0;i<text.length;i++){
+      const ch=text[i];
+      if(inQ){
+        if(ch==='"'){ if(text[i+1]==='"'){field+='"';i++;} else inQ=false; }
+        else field+=ch;
+      }else{
+        if(ch==='"')inQ=true;
+        else if(ch===delim){cur.push(field);field="";}
+        else if(ch==="\n"){cur.push(field);rows.push(cur);cur=[];field="";}
+        else if(ch==="\r"){}
+        else field+=ch;
+      }
+    }
+    if(field.length||cur.length){cur.push(field);rows.push(cur);}
+    return rows.filter(r=>r.length>1||(r.length===1&&r[0].trim()!==""));
+  }
+
+  function guessCol(headers,cands){
+    const H=headers.map(norm);
+    for(const c of cands){ const i=H.findIndex(h=>h===c); if(i>=0)return i; }
+    for(const c of cands){ const i=H.findIndex(h=>h.includes(c)); if(i>=0)return i; }
+    return -1;
+  }
+
+  /* ---------- File load ---------- */
+  const drop=$("#drop"), fileInput=$("#file");
+  drop.addEventListener("click",()=>fileInput.click());
+  ["dragover","dragenter"].forEach(e=>drop.addEventListener(e,ev=>{ev.preventDefault();drop.classList.add("drag");}));
+  ["dragleave","drop"].forEach(e=>drop.addEventListener(e,ev=>{ev.preventDefault();drop.classList.remove("drag");}));
+  drop.addEventListener("drop",ev=>{ const f=ev.dataTransfer.files[0]; if(f)readFile(f); });
+  fileInput.addEventListener("change",ev=>{ const f=ev.target.files[0]; if(f)readFile(f); });
+
+  function readFile(f){
+    const r=new FileReader();
+    r.onload=()=>{ try{ ingest(r.result); }catch(e){ toast("No se pudo leer el CSV."); console.error(e); } };
+    r.readAsText(f,"UTF-8");
+  }
+
+  function ingest(text){
+    const rows=parseCSV(text);
+    if(rows.length<2){ toast("El CSV parece vacío."); return; }
+    HEADERS=rows[0].map(h=>h.trim());
+    RAW=rows.slice(1).map(r=>{ const o={}; HEADERS.forEach((h,i)=>o[h]=(r[i]!=null?r[i].trim():"")); return o; });
+    buildMapUI();
+    $("#mapArea").classList.remove("hidden");
+    $("#mapInfo").textContent=RAW.length+" filas leídas · "+HEADERS.length+" columnas";
+    drop.querySelector("b").textContent="✓ "+RAW.length+" filas cargadas — reemplazá el archivo cuando quieras";
+  }
+
+  function buildMapUI(){
+    const opts=(sel,extra)=>{ let h=extra?'<option value="__none">— ninguna —</option>':""; HEADERS.forEach((x,i)=>h+=`<option value="${i}">${esc(x)}</option>`); sel.innerHTML=h; };
+    const S={sku:$("#colSku"),name:$("#colName"),brand:$("#colBrand"),stock:$("#colStock"),prov:$("#colProv")};
+    Object.entries(S).forEach(([k,sel])=>opts(sel,k==="prov"||k==="sku"));
+    const saved=load(LS_MAP,null);
+    const set=(sel,i)=>{ if(i>=0)sel.value=String(i); };
+    if(saved && saved.headers && saved.headers.join("|")===HEADERS.join("|")){
+      set(S.sku,saved.sku);set(S.name,saved.name);set(S.brand,saved.brand);set(S.stock,saved.stock);set(S.prov,saved.prov);
+    }else{
+      set(S.sku,guessCol(HEADERS,["sku","codigo","cod","identificador de variante","barcode","ean"]));
+      set(S.name,guessCol(HEADERS,["nombre","name","titulo","producto","descripcion"]));
+      set(S.brand,guessCol(HEADERS,["marca","brand","fabricante"]));
+      set(S.stock,guessCol(HEADERS,["stock","cantidad","existencia","disponible"]));
+      set(S.prov,guessCol(HEADERS,["proveedor","supplier","distribuidor"]));
+    }
+  }
+
+  $("#applyMap").addEventListener("click",()=>{
+    const gv=id=>$(id).value;
+    const iSku=gv("#colSku"),iName=gv("#colName"),iBrand=gv("#colBrand"),iStock=gv("#colStock"),iProv=gv("#colProv");
+    if(iStock==="__none"||iStock===""){toast("Elegí la columna de stock.");return;}
+    save(LS_MAP,{headers:HEADERS,sku:+iSku||-1,name:+iName||-1,brand:+iBrand||-1,stock:+iStock,prov:iProv==="__none"?-1:(+iProv)});
+    const ff=$("#ffill").checked;
+    let lastBrand="",lastName="";
+    ITEMS=RAW.map((o,idx)=>{
+      const H=HEADERS;
+      let name=iName!=="__none"?o[H[iName]]:"";
+      let brand=iBrand!=="__none"?o[H[iBrand]]:"";
+      if(ff){ if(!name)name=lastName; else lastName=name; if(!brand)brand=lastBrand; else lastBrand=brand; }
+      const sku=(iSku!=="__none"?o[H[iSku]]:"")||("row-"+idx);
+      const prov=iProv!=="__none"?o[H[iProv]]:"";
+      return { sku:sku.toString().trim(), name:(name||"(sin nombre)").trim(), brand:(brand||"").trim(), prov:(prov||"").trim(), actual:toInt(o[H[iStock]]) };
+    }).filter(x=>x.name||x.sku);
+    // dedupe by sku keeping summed stock? -> keep as-is (variantes = filas distintas)
+    ITEMS.forEach(it=>{ if(it.brand) brandDisplay[norm(it.brand)]=it.brand; pisoMeta[it.sku]={n:it.name,m:it.brand}; });
+    save(LS_BRANDDISP,brandDisplay); save(LS_PISOMETA,pisoMeta);
+    renderAll();
+    switchTab("piso");
+    toast(ITEMS.length+" artículos cargados.");
+  });
+
+  /* ---------- Reposición calc ---------- */
+  function needOf(it){ const p=piso[it.sku]; if(p==null)return null; const n=p-it.actual; return n>0?n:0; }
+
+  /* ---------- TAB 2: PISO ---------- */
+  function renderPiso(){
+    const q=norm($("#pisoSearch").value);
+    const onlyUnset=$("#pisoOnlyUnset").checked;
+    const rows=ITEMS.filter(it=>{
+      if(onlyUnset && piso[it.sku]!=null)return false;
+      if(!q)return true;
+      return norm(it.name).includes(q)||norm(it.sku).includes(q)||norm(it.brand).includes(q);
+    });
+    // ordenar por la columna elegida
+    if(pisoSort.col){
+      const keyf=it=>{
+        switch(pisoSort.col){
+          case "name": return norm(it.name);
+          case "brand": return norm(it.brand);
+          case "actual": return it.actual;
+          case "piso": return piso[it.sku]==null?-Infinity:piso[it.sku];
+          case "need": { const n=needOf(it); return n==null?-Infinity:n; }
+        }
+        return "";
+      };
+      rows.sort((a,b)=>{ const x=keyf(a),y=keyf(b); return x<y?-pisoSort.dir : x>y?pisoSort.dir : 0; });
+    }
+    $$("#pisoTable thead th[data-sort]").forEach(th=>{
+      const base=th.dataset.label||(th.dataset.label=th.textContent);
+      th.textContent=base+(pisoSort.col===th.dataset.sort?(pisoSort.dir>0?" \u2191":" \u2193"):"");
+    });
+    const body=$("#pisoBody");
+    body.innerHTML=rows.map(it=>{
+      const p=piso[it.sku];
+      const need=needOf(it);
+      let repone= p==null?'<span class="badge-ok">—</span>' : (need>0?`<span class="badge-need">${need}</span>`:'<span class="badge-ok">ok</span>');
+      const act = it.actual<0?`<span class="neg">${it.actual}</span>`:it.actual;
+      return `<tr data-sku="${esc(it.sku)}">
+        <td class="name"><b>${esc(it.name)}</b><small>${esc(it.sku)}</small></td>
+        <td>${it.brand?`<span class="pill">${esc(it.brand)}</span>`:'<span class="badge-ok">—</span>'}</td>
+        <td class="num">${act}</td>
+        <td class="num"><input class="cellinput ${p!=null?'set':''}" type="number" min="0" step="1" value="${p!=null?p:""}" placeholder="—"></td>
+        <td class="num">${repone}</td>
+      </tr>`;
+    }).join("")||`<tr><td colspan="5" class="empty">Sin resultados.</td></tr>`;
+
+    body.querySelectorAll("input.cellinput").forEach(inp=>{
+      inp.addEventListener("change",()=>{
+        const sku=inp.closest("tr").dataset.sku;
+        const v=inp.value.trim();
+        if(v===""){ delete piso[sku]; } else { piso[sku]=Math.max(0,toInt(v)); }
+        save(LS_PISO,piso);
+        inp.classList.toggle("set",v!=="");
+        renderPiso(); updateBadges(); renderOrden();
+      });
+    });
+    const withPiso=ITEMS.filter(it=>piso[it.sku]!=null).length;
+    $("#pisoCount").textContent=`${rows.length} mostrados · ${withPiso}/${ITEMS.length} con piso definido`;
+  }
+  $("#pisoSearch").addEventListener("input",renderPiso);
+  $("#pisoOnlyUnset").addEventListener("change",renderPiso);
+
+  $("#bulkPisoBtn").addEventListener("click",()=>{
+    const q=norm($("#pisoSearch").value);
+    const onlyUnset=$("#pisoOnlyUnset").checked;
+    const rows=ITEMS.filter(it=>{
+      if(onlyUnset && piso[it.sku]!=null)return false;
+      if(!q)return true;
+      return norm(it.name).includes(q)||norm(it.sku).includes(q)||norm(it.brand).includes(q);
+    });
+    if(!rows.length){toast("No hay filas filtradas.");return;}
+    const v=prompt(`Fijar stock de piso = ? para los ${rows.length} artículos filtrados:`,"3");
+    if(v==null)return;
+    const n=Math.max(0,toInt(v));
+    rows.forEach(it=>piso[it.sku]=n);
+    save(LS_PISO,piso);
+    renderPiso();updateBadges();renderOrden();
+    toast(`Piso = ${n} aplicado a ${rows.length} artículos.`);
+  });
+
+  $("#exportPisoBtn").addEventListener("click",()=>{
+    const lines=["sku,nombre,marca,stock_actual,stock_piso"];
+    ITEMS.forEach(it=>{ const p=piso[it.sku]; lines.push([csv(it.sku),csv(it.name),csv(it.brand),it.actual,p!=null?p:""].join(",")); });
+    download("stock_piso.csv",lines.join("\n"));
+  });
+  $("#importPisoBtn").addEventListener("click",()=>$("#importPisoFile").click());
+  $("#importPisoFile").addEventListener("change",ev=>{
+    const f=ev.target.files[0]; if(!f)return;
+    const r=new FileReader();
+    r.onload=()=>{
+      const rows=parseCSV(r.result); if(rows.length<2){toast("CSV vacío.");return;}
+      const H=rows[0].map(norm); const iSku=H.findIndex(h=>h.includes("sku")); const iPiso=H.findIndex(h=>h.includes("piso"));
+      if(iSku<0||iPiso<0){toast("El CSV necesita columnas sku y stock_piso.");return;}
+      let n=0; rows.slice(1).forEach(r=>{ const sku=(r[iSku]||"").trim(); const v=(r[iPiso]||"").trim(); if(sku&&v!==""){piso[sku]=Math.max(0,toInt(v));n++;} });
+      save(LS_PISO,piso); renderAll(); toast(`${n} pisos importados.`);
+    };
+    r.readAsText(f,"UTF-8"); ev.target.value="";
+  });
+
+  /* ---------- TAB 3: PROVEEDORES ---------- */
+  function brandsAgg(){
+    const m={}; // norm -> {display,count}
+    ITEMS.forEach(it=>{ if(!it.brand)return; const k=norm(it.brand); if(!m[k])m[k]={display:it.brand,count:0}; m[k].count++; });
+    return m;
+  }
+  function renderProv(){
+    const agg=brandsAgg();
+    const q=norm($("#provSearch").value);
+    const onlyUnset=$("#provOnlyUnset").checked;
+    const echoOnly=$("#provEchoOnly").checked;
+    const isEcho=k=>!!(provMap[k] && norm(provMap[k])===k);   // proveedor idéntico a la marca
+    const keys=Object.keys(agg).sort((a,b)=>agg[b].count-agg[a].count);
+    const body=$("#provBody");
+    const rows=keys.filter(k=>{
+      if(onlyUnset && provMap[k])return false;
+      if(echoOnly && !isEcho(k))return false;
+      if(!q)return true;
+      return norm(agg[k].display).includes(q);
+    });
+    body.innerHTML=rows.map(k=>`<tr data-k="${esc(k)}">
+      <td><b style="font-weight:500">${esc(agg[k].display)}</b></td>
+      <td class="num">${agg[k].count}</td>
+      <td><input class="ptext ${isEcho(k)?'echo':''}" type="text" value="${esc(provMap[k]||"")}" placeholder="Nombre del proveedor / distribuidor"></td>
+    </tr>`).join("")||`<tr><td colspan="3" class="empty">Sin marcas para mostrar.</td></tr>`;
+    body.querySelectorAll("input.ptext").forEach(inp=>{
+      inp.addEventListener("change",()=>{
+        const k=inp.closest("tr").dataset.k; const v=inp.value.trim();
+        if(v)provMap[k]=v; else delete provMap[k];
+        save(LS_PROV,provMap); updateBadges(); renderOrden();
+        inp.classList.toggle("echo",isEcho(k));
+      });
+    });
+    const mapped=keys.filter(k=>provMap[k]).length;
+    const review=keys.filter(k=>!provMap[k]||isEcho(k)).length;
+    $("#provCount").textContent=`${keys.length} marcas · ${mapped} con proveedor · ${review} a revisar (vacío o = marca)`;
+  }
+  $("#provSearch").addEventListener("input",renderProv);
+  $("#provOnlyUnset").addEventListener("change",renderProv);
+  $("#provEchoOnly").addEventListener("change",renderProv);
+
+  function provOf(it){
+    const p=provMap[norm(it.brand)];
+    if(p) return p;                 // el mapa Marca→Proveedor que cargaste en la pestaña 3 SIEMPRE manda
+    if(it.prov) return it.prov;     // respaldo: proveedor del CSV, solo si esa marca no está mapeada
+    return "(sin proveedor)";
+  }
+
+  /* ---------- TAB 4: ORDENES ---------- */
+  // cantidad efectiva a pedir: override manual si existe, si no el cálculo automático (piso - actual)
+  function qtyOf(it){ const o=pedir[it.sku]; if(o!=null)return o; return needOf(it); }
+  let ORDER_GROUPS=[]; // [{key,gi,items:[{it,auto,qty,overridden}]}]
+
+  function renderOrden(){
+    const by=$("#groupBy").value; // prov | brand
+    const stats=$("#ordenStats"), body=$("#ordenBody");
+
+    if(!ITEMS.length){ ORDER_GROUPS=[]; stats.innerHTML=""; body.innerHTML=`<div class="empty"><b>Todavía no cargaste stock</b>Subí el CSV en la pestaña 1.</div>`; return; }
+
+    // el conjunto de artículos de la orden lo define la necesidad AUTOMÁTICA (piso - actual > 0);
+    // la cantidad a pedir de cada uno es editable.
+    const rows=ITEMS.map(it=>({it,auto:needOf(it)}))
+      .filter(x=>x.auto!=null && x.auto>0)
+      .map(x=>({ it:x.it, auto:x.auto, qty:(pedir[x.it.sku]!=null?pedir[x.it.sku]:x.auto), overridden:pedir[x.it.sku]!=null }));
+
+    if(!rows.length){ ORDER_GROUPS=[]; stats.innerHTML=""; body.innerHTML=`<div class="empty"><b>No hay nada para reponer</b>Ningún artículo con piso definido está por debajo de su objetivo. Definí stock de piso en la pestaña 2.</div>`; return; }
+
+    const gm={};
+    rows.forEach(r=>{ const key=by==="prov"?provOf(r.it):(r.it.brand||"(sin marca)"); (gm[key]=gm[key]||[]).push(r); });
+    // orden de grupos por necesidad AUTOMÁTICA (estable: no se reordena al editar cantidades), luego alfabético
+    const keys=Object.keys(gm).sort((a,b)=>{
+      const ua=gm[b].reduce((s,x)=>s+x.auto,0)-gm[a].reduce((s,x)=>s+x.auto,0);
+      return ua!==0?ua:a.localeCompare(b);
+    });
+    ORDER_GROUPS=keys.map((k,gi)=>({ key:k, gi, items:gm[k].sort((a,b)=>{
+      const c=norm(a.it.brand||"").localeCompare(norm(b.it.brand||""));
+      return c!==0?c:norm(a.it.name).localeCompare(norm(b.it.name));
+    }) }));
+
+    body.innerHTML=ORDER_GROUPS.map(g=>{
+      const units=g.items.reduce((s,x)=>s+x.qty,0);
+      return `<div class="grouphead"><h3>${esc(g.key)}</h3><div class="meta"><b>${g.items.length}</b> artículos · <b class="gunits" data-gi="${g.gi}">${units}</b> unidades</div></div>
+      <div class="tablewrap" style="max-height:none;margin-top:8px">
+      <table><thead><tr><th>Artículo</th><th>SKU</th><th>Marca</th><th class="num">Actual</th><th class="num">Piso</th><th class="num">Auto</th><th class="num">Pedir</th></tr></thead>
+      <tbody>${g.items.map(({it,auto,qty,overridden})=>`<tr>
+        <td class="name"><b>${esc(it.name)}</b></td>
+        <td><small style="color:var(--muted)">${esc(it.sku)}</small></td>
+        <td>${esc(it.brand||"—")}</td>
+        <td class="num">${it.actual<0?`<span class="neg">${it.actual}</span>`:it.actual}</td>
+        <td class="num">${piso[it.sku]}</td>
+        <td class="num" style="color:var(--muted)">${auto}</td>
+        <td class="num"><input class="cellinput pedir ${overridden?'set':''}" type="number" min="0" step="1" data-sku="${esc(it.sku)}" value="${qty}"></td></tr>`).join("")}</tbody></table></div>`;
+    }).join("");
+
+    body.querySelectorAll("input.pedir").forEach(inp=>{
+      inp.addEventListener("change",()=>{
+        const sku=inp.dataset.sku, v=inp.value.trim();
+        if(v==="") delete pedir[sku]; else pedir[sku]=Math.max(0,toInt(v));
+        save(LS_PEDIR,pedir);
+        inp.classList.toggle("set",pedir[sku]!=null);
+        recalcOrderTotals();
+      });
+    });
+
+    recalcOrderTotals();
+  }
+
+  function recalcOrderTotals(){
+    let total=0;
+    ORDER_GROUPS.forEach(g=>{
+      const u=g.items.reduce((s,x)=>s+(pedir[x.it.sku]!=null?pedir[x.it.sku]:x.auto),0);
+      const el=document.querySelector(`.gunits[data-gi="${g.gi}"]`);
+      if(el)el.textContent=u;
+      total+=u;
+    });
+    const lines=ORDER_GROUPS.reduce((s,g)=>s+g.items.length,0);
+    $("#ordenStats").innerHTML=`
+      <div class="stat"><div class="k">Grupos</div><div class="v mag">${ORDER_GROUPS.length}</div></div>
+      <div class="stat"><div class="k">Artículos a pedir</div><div class="v">${lines}</div></div>
+      <div class="stat"><div class="k">Unidades totales</div><div class="v">${total}</div></div>`;
+    const by=$("#groupBy").value;
+    $("#printSub").textContent=`Agrupado por ${by==="prov"?"proveedor":"marca"} · ${new Date().toLocaleDateString("es-AR")} · ${lines} artículos · ${total} unidades`;
+  }
+  $("#groupBy").addEventListener("change",renderOrden);
+
+  $("#resetPedirBtn").addEventListener("click",()=>{
+    if(!Object.keys(pedir).length){ toast("No hay cantidades editadas."); return; }
+    if(!confirm("¿Volver todas las cantidades a la reposición automática (piso − actual)? Se pierden los ajustes manuales de Pedir.")) return;
+    pedir={}; save(LS_PEDIR,pedir); renderOrden(); toast("Cantidades restablecidas a automático.");
+  });
+
+  $("#exportOrdenBtn").addEventListener("click",()=>{
+    const by=$("#groupBy").value;
+    const rows=ITEMS.map(it=>({it,auto:needOf(it)}))
+      .filter(x=>x.auto!=null && x.auto>0)
+      .map(x=>({ it:x.it, qty:(pedir[x.it.sku]!=null?pedir[x.it.sku]:x.auto) }))
+      .filter(x=>x.qty>0);
+    if(!rows.length){toast("Nada para exportar.");return;}
+    const head=(by==="prov"?"proveedor":"marca")+",sku,nombre,marca,stock_actual,stock_piso,pedir";
+    const lines=[head];
+    rows.sort((a,b)=>b.qty-a.qty).forEach(({it,qty})=>{
+      const grp=by==="prov"?provOf(it):(it.brand||"(sin marca)");
+      lines.push([csv(grp),csv(it.sku),csv(it.name),csv(it.brand),it.actual,piso[it.sku],qty].join(","));
+    });
+    download(`orden_compra_${by}.csv`,lines.join("\n"));
+  });
+  $("#printOrdenBtn").addEventListener("click",()=>window.print());
+
+  /* ---------- helpers ---------- */
+  function csv(v){ v=(v==null?"":v.toString()); return /[",\n;]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v; }
+  function download(name,content){
+    const blob=new Blob([content],{type:"text/csv;charset=utf-8;"});
+    const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=name; a.click();
+    setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+  }
+
+  function updateBadges(){
+    $("#nPiso").textContent=ITEMS.filter(it=>piso[it.sku]!=null).length;
+    $("#nProv").textContent=Object.keys(brandsAgg()).filter(k=>provMap[k]).length;
+    const need=ITEMS.map(needOf).filter(n=>n!=null&&n>0).length;
+    $("#nOrden").textContent=need;
+    $("#statechip").innerHTML = ITEMS.length
+      ? `<b>${ITEMS.length}</b> artículos · <b>${need}</b> a reponer`
+      : "Sin datos cargados";
+  }
+
+  function renderAll(){ renderPiso(); renderProv(); renderOrden(); updateBadges(); }
+
+  /* ---------- tabs ---------- */
+  function switchTab(name){
+    $$("#tabs button").forEach(b=>b.classList.toggle("active",b.dataset.tab===name));
+    ["cargar","piso","prov","orden"].forEach(t=>$("#tab-"+t).classList.toggle("hidden",t!==name));
+    if(name==="orden")renderOrden();
+  }
+  $$("#tabs button").forEach(b=>b.addEventListener("click",()=>switchTab(b.dataset.tab)));
+
+  // ordenamiento de la tabla Stock de piso al tocar una cabecera
+  $$("#pisoTable thead th[data-sort]").forEach(th=>{
+    th.addEventListener("click",()=>{
+      const c=th.dataset.sort;
+      if(pisoSort.col===c) pisoSort.dir=-pisoSort.dir;
+      else { pisoSort.col=c; pisoSort.dir=(c==="name"||c==="brand")?1:-1; }
+      renderPiso();
+    });
+  });
+
+  /* ---------- SINCRONIZACIÓN EN LA NUBE (Google Sheets vía Apps Script) ---------- */
+  const DEFAULT_CLOUD_URL="https://script.google.com/macros/s/AKfycbzymiHDYq2RuwDIkeX0suJUUnPTPmXRlTEbEYdgC1GxQlcBV8-3wB0ZR48wcoiMWQYy/exec";
+  function cloudCfg(){ const u=(localStorage.getItem(LS_CLOUD_URL)||DEFAULT_CLOUD_URL).trim(); const k=localStorage.getItem(LS_CLOUD_KEY)||""; return u?{url:u,clave:k}:null; }
+  function setStatus(msg,cls){ const el=$("#cloudStatus"); if(!el)return; el.textContent=msg; el.style.color=(cls==="ok")?"var(--ok)":(cls==="bad")?"var(--bad)":"var(--muted)"; }
+
+  let pushT;
+  function queuePush(){ if(!cloudCfg())return; const a=$("#cloudAuto"); if(a&&!a.checked)return; clearTimeout(pushT); setStatus("cambios sin guardar…"); pushT=setTimeout(()=>cloudPush(),1500); }
+
+  async function cloudPull(silent){
+    const c=cloudCfg(); if(!c){ if(!silent)toast("Configurá la URL y la clave primero."); return; }
+    setStatus("bajando…");
+    try{
+      const r=await fetch(c.url+"?clave="+encodeURIComponent(c.clave)+"&t="+Date.now());
+      const j=await r.json();
+      if(!j.ok) throw new Error(j.error||"error");
+      applyRemote(j.data||{});
+      setStatus("actualizado desde la nube ✓","ok");
+      if(!silent)toast("Datos bajados de la nube.");
+    }catch(e){ setStatus("error al bajar: "+e.message,"bad"); if(!silent)toast("No se pudo bajar de la nube. Revisá URL y clave."); }
+  }
+
+  function applyRemote(data){
+    applyingRemote=true;
+    try{
+      if(Array.isArray(data.piso)&&data.piso.length){
+        piso={}; data.piso.forEach(r=>{ const sku=(r.sku||"").toString().trim(); if(sku&&r.piso!==""&&r.piso!=null){ piso[sku]=Math.max(0,toInt(r.piso)); if(r.nombre||r.marca) pisoMeta[sku]={n:r.nombre||"",m:r.marca||""}; } });
+        save(LS_PISO,piso); save(LS_PISOMETA,pisoMeta);
+      }
+      if(Array.isArray(data.prov)&&data.prov.length){
+        provMap={}; data.prov.forEach(r=>{ const m=(r.marca||"").toString().trim(); const pr=(r.proveedor||"").toString().trim(); if(m&&pr){ provMap[norm(m)]=pr; brandDisplay[norm(m)]=m; } });
+        save(LS_PROV,provMap); save(LS_BRANDDISP,brandDisplay);
+      }
+      if(Array.isArray(data.pedir)&&data.pedir.length){
+        pedir={}; data.pedir.forEach(r=>{ const sku=(r.sku||"").toString().trim(); if(sku&&r.pedir!==""&&r.pedir!=null) pedir[sku]=Math.max(0,toInt(r.pedir)); });
+        save(LS_PEDIR,pedir);
+      }
+      if(data.config&&data.config.map){ try{ const m=typeof data.config.map==="string"?JSON.parse(data.config.map):data.config.map; if(m&&m.headers) save(LS_MAP,m); }catch(e){} }
+    } finally { applyingRemote=false; }
+    renderAll();
+  }
+
+  async function cloudPush(){
+    const c=cloudCfg(); if(!c)return;
+    setStatus("subiendo…");
+    const payload={ clave:c.clave, data:{
+      piso: Object.entries(piso).map(([sku,p])=>({ sku, nombre:(pisoMeta[sku]&&pisoMeta[sku].n)||"", marca:(pisoMeta[sku]&&pisoMeta[sku].m)||"", piso:p })),
+      prov: Object.entries(provMap).map(([k,pr])=>({ marca:(brandDisplay[k]||k), proveedor:pr })),
+      pedir: Object.entries(pedir).map(([sku,q])=>({ sku, pedir:q })),
+      config: { map: localStorage.getItem(LS_MAP)||"" }
+    }};
+    try{
+      const r=await fetch(c.url,{ method:"POST", headers:{"Content-Type":"text/plain;charset=utf-8"}, body:JSON.stringify(payload) });
+      const j=await r.json();
+      if(!j.ok) throw new Error(j.error||"error");
+      setStatus("guardado en la nube ✓","ok");
+    }catch(e){ setStatus("error al subir: "+e.message,"bad"); }
+  }
+
+  $("#cloudSaveBtn").addEventListener("click",()=>{
+    const u=($("#cloudUrl").value.trim()||DEFAULT_CLOUD_URL), k=$("#cloudKey").value.trim();
+    localStorage.setItem(LS_CLOUD_URL,u); localStorage.setItem(LS_CLOUD_KEY,k);
+    setStatus("conexión guardada. Bajá o subí para sincronizar.","ok"); toast("Conexión guardada.");
+  });
+  $("#cloudPullBtn").addEventListener("click",()=>cloudPull(false));
+  $("#cloudPushBtn").addEventListener("click",()=>cloudPush());
+  $("#cloudAuto").addEventListener("change",()=>localStorage.setItem(LS_CLOUD_AUTO,$("#cloudAuto").checked?"1":"0"));
+
+  /* ---------- SEMILLA de stock de piso (última actualización provista por Fernando) ---------- */
+  // Solo se aplica en un dispositivo sin datos previos; nunca pisa lo que ya cargaste ni lo que baje de la nube.
+  const SEED_PISO=[{"sku":"FA-0717-01-01","nombre":"Mordaza Fragile Con Bola","marca":"Infarta","piso":1},{"sku":"MC40-1 BI-300143-1","nombre":"Succionador Pretty Love Romance Breeze","marca":"Pretty Love","piso":3},{"sku":"1957-55","nombre":"Kiss Fun Bump Orgasm","marca":"Sex Therapy","piso":1},{"sku":"MC38APP","nombre":"Pretty Love Romance Thalia","marca":"Pretty Love","piso":1},{"sku":"BI-026278N","nombre":"Funda Pretty Love Darnell","marca":"Pretty Love","piso":3},{"sku":"BI-026260Q","nombre":"Funda Pretty Love Tyronn","marca":"Pretty Love","piso":3},{"sku":"BI-026257","nombre":"Funda Pretty Love Kylian","marca":"Pretty Love","piso":3},{"sku":"BI-026255","nombre":"Funda Pretty Love Hani","marca":"Pretty Love","piso":3},{"sku":"BI-026254","nombre":"Funda Pretty Love Chane","marca":"Pretty Love","piso":3},{"sku":"BI-026253","nombre":"Funda Pretty Love Bunion","marca":"Pretty Love","piso":3},{"sku":"FN-T0402","nombre":"Vibrador Dual Whale Rosa","marca":"Fly Night","piso":0},{"sku":"S9-401-21","nombre":"Eyaculador Arnes Plumber Carne","marca":"SS Mayorista","piso":1},{"sku":"2104-22","nombre":"Kong Vibro","marca":"Extasy","piso":2},{"sku":"2104-12","nombre":"Mini Kong Vibro","marca":"Extasy","piso":2},{"sku":"18019","nombre":"Huevo Estimulador Luna 2","marca":"sex therapy","piso":5},{"sku":"row-17","nombre":"Maxx Preservativos L-Arginina X3","marca":"Maxx","piso":5},{"sku":"FN-T1111","nombre":"Finger Vibrator Bullet Transparente","marca":"SS Mayorista","piso":2},{"sku":"FN-T0702","nombre":"Masajeador Hidden Rosa","marca":"SS Mayorista","piso":2},{"sku":"FN-T0400","nombre":"Vibrador Dual Whale Negro","marca":"SS Mayorista","piso":1},{"sku":"RY-1003 PINK","nombre":"KIT X 3 ROSA - KIT RY-1003 PINK","marca":"sex therapy","piso":0},{"sku":"KT3300","nombre":"Anillos transparentes Glow 1 - KT3300","marca":"Sex Therapy","piso":4},{"sku":"SI039","nombre":"Easy clean enema 2 - SI039","marca":"Sex Therapy","piso":3},{"sku":"BST-VB2405025","nombre":"Doble estimulador FLICKKING 3 EN 1 - BST-VB2405025","marca":"Sex Therapy","piso":2},{"sku":"BW-008066Q","nombre":"Consolador Inflable Con Sopapa 19Cm X 4Cm","marca":"SSM","piso":0},{"sku":"row-26","nombre":"Vital Honey \"miel del amor\" 1 sachet x 15gr","marca":"dosevital","piso":12},{"sku":"FT-371277","nombre":"Trans Desire - 4 en 1","marca":"Infarta","piso":1},{"sku":"2108-03","nombre":"Consolador Sean Michael Mulatto XL","marca":"Extasy","piso":2},{"sku":"BM-009190Z-1","nombre":"Crazy Bull Vagina & Anus","marca":"Crazy Bull","piso":2},{"sku":"C01V-1","nombre":"Perfume Afrodisiaco Hot Inevitable Prive�","marca":"Sexitive","piso":2},{"sku":"FH","nombre":"Perfume For Him Aphrodisiac - 100 ml","marca":"Sexitive","piso":2},{"sku":"row-33","nombre":"Maxx SuperTachas X3","marca":"Maxx","piso":5},{"sku":"FA-0706-01-04","nombre":"Set Ribbon Esposa Y Collar Destello Negro","marca":"Infarta","piso":1},{"sku":"FA-0509-04-1","nombre":"Esposas de tobillo Luxury","marca":"Infarta","piso":1},{"sku":"BW-008079P","nombre":"DILDO REALISTICO EYACULADOR CON SOPAPA","marca":"Extasy","piso":2},{"sku":"30-303-39","nombre":"Nature Mulato N 6 - 20 X 5.5 Cm","marca":"SS Mayorista","piso":0},{"sku":"30-807-39","nombre":"Nature Mulato N 5 - 19.5 X 5 Cm - (copia)","marca":"SS Mayorista","piso":0},{"sku":"30-804-39","nombre":"Nature Mulato N 4 - 19 X 5 Cm","marca":"SS Mayorista","piso":0},{"sku":"30-803-39","nombre":"Nature Mulato N 3 - 17 X 4.5","marca":"SS Mayorista","piso":5},{"sku":"30-808-39","nombre":"Nature Mulato N2 17x4cm.","marca":"SS Mayorista","piso":5},{"sku":"30-302-39","nombre":"Nature Mulato N 1 - 16.5 X 4 Cm","marca":"SS Mayorista","piso":0},{"sku":"FT-863770","nombre":"Anal Douche 160Ml Aquaflush","marca":"SS Mayorista","piso":2},{"sku":"LV415002","nombre":"Ingen Hollow Big 8.5","marca":"Lovetoy","piso":2},{"sku":"M1509NEG","nombre":"Hombre - Tanga Colaless Abierta Engomada","marca":"Malena","piso":2},{"sku":"M1514LEO","nombre":"Hombre - Tanga Colaless Abierta","marca":"Malena","piso":2},{"sku":"BW-013004","nombre":"Protesis Mamaria Suplementario X2 150Gs","marca":"Caiman","piso":0},{"sku":"M1504LEO","nombre":"Hombre - Tanga Colaless","marca":"Malena","piso":2},{"sku":"M1809NEG","nombre":"Hombre - Body Engomado Con Tiradores","marca":"Malena","piso":3},{"sku":"M1821Bla","nombre":"Hombre - Body Cavado De Microfibra Y Red","marca":"Malena","piso":2},{"sku":"M1821neg","nombre":"Hombre - Body Cavado De Microfibra Y Red","marca":"Malena","piso":2},{"sku":"M1821Bla","nombre":"Hombre - Body Cavado De Microfibra Y Red","marca":"Malena","piso":2},{"sku":"M1501","nombre":"Hombre - Tanga Colaless De Microtul","marca":"Malena","piso":2},{"sku":"M1501","nombre":"Hombre - Tanga Colaless De Microtul","marca":"Malena","piso":2},{"sku":"M1501","nombre":"Hombre - Tanga Colaless De Microtul","marca":"Malena","piso":2},{"sku":"M160BLA","nombre":"Hombre - Top Y B�xer De Red","marca":"Malena","piso":2},{"sku":"FT-570392","nombre":"Anal Plug Orion Metal","marca":"infarta","piso":5},{"sku":"FT-570407","nombre":"Anal Plug Orion Metal","marca":"infarta","piso":5},{"sku":"FT-570422","nombre":"Anal Plug Titan Metal","marca":"SS Mayorista","piso":2},{"sku":"FT-570437","nombre":"Anal Plug Titan Metal","marca":"SS Mayorista","piso":2},{"sku":"BI-014362W-9","nombre":"Vibrador Huevo Jenny 12 Func.","marca":"Pretty Love","piso":2},{"sku":"FT-181502","nombre":"Bolas Kegel Balls Belixa","marca":"Pretty Love","piso":2},{"sku":"BI-026252","nombre":"Pretty love Nile Funda Con Extension","marca":"Pretty Love","piso":3},{"sku":"BI-210206-1","nombre":"Pretty Love Bunny Ring 3","marca":"Pretty Love","piso":3},{"sku":"BM-00900T58","nombre":"Vacuum Cup Masturbator Vagina","marca":"pretty love","piso":0},{"sku":"8946","nombre":"Bodystocking 8946","marca":"Malena","piso":1},{"sku":"R140","nombre":"INMOVILIZADOR CEPO TOBILLOS Y ESPOSAS","marca":"Infarta","piso":1},{"sku":"1525","nombre":"Bodystocking 1525","marca":"Malena","piso":1},{"sku":"005E6","nombre":"Bodystocking 005E6","marca":"Malena","piso":1},{"sku":"FA-0150-01-1","nombre":"Arn�s De Pareja Con Cintur�n","marca":"SS Mayorista","piso":2},{"sku":"FT-181537","nombre":"Masturbator Glidemax","marca":"SS Mayorista","piso":2},{"sku":"PD3882-24","nombre":"Strapless Anal Stimulator","marca":"Infarta","piso":1},{"sku":"BI-210142","nombre":"Anillo Pretty Love Thimble","marca":"Pretty Love","piso":3},{"sku":"sw1124","nombre":"Masajeador Wand Massagers","marca":"Sex Therapy","piso":3},{"sku":"SW1022","nombre":"Masturbador Masculino Giratorio","marca":"Sex Therapy","piso":1},{"sku":"FT-342608","nombre":"Prostate Tyran","marca":"Infarta","piso":2},{"sku":"FT-342601","nombre":"Anal Vibrator Ragnar","marca":"Infarta","piso":2},{"sku":"FT-570632","nombre":"Plug Uretra Urethra Viper Silicone","marca":"Infarta","piso":2},{"sku":"FT-752243","nombre":"Thrusting Anal Vibrator Shadow Shaker","marca":"Infarta","piso":1},{"sku":"FT-570902","nombre":"Castidad Guardian Senior Silicone","marca":"Infarta","piso":1},{"sku":"FT-570947","nombre":"Anal Plug Flower Silicone","marca":"Infarta","piso":3},{"sku":"FT-570962","nombre":"Anal Plug Flower Silicone","marca":"Infarta","piso":3},{"sku":"FT-471504","nombre":"Succionador Air Pulse Vibrator Breezea","marca":"Infarta","piso":3},{"sku":"RD533","nombre":"PDX Male Interactive Fuck Him Silly","marca":"Extasy","piso":1},{"sku":"BW-008016","nombre":"Mr. Big","marca":"Extasy","piso":1},{"sku":"SW1082","nombre":"Masturbador Funny mee Tornado","marca":"Sex Therapy","piso":1},{"sku":"SW1067","nombre":"Masturbador Belucci","marca":"Sex Therapy","piso":1},{"sku":"SW2036","nombre":"Masajeador de pr�stata Slapping Pulse","marca":"Sex Therapy","piso":1},{"sku":"SW1025","nombre":"Vibrador Caterpillar de silicona recargable","marca":"Sex Therapy","piso":0},{"sku":"ST-MA-0207","nombre":"Succionador LUXURY RED PASSION KISS ME 1","marca":"Sex Therapy","piso":2},{"sku":"ST-WE-0077","nombre":"Luxury succion 16","marca":"Sex Therapy","piso":3},{"sku":"502","nombre":"Trikini al cuello","marca":"Salta Sex Shop","piso":2},{"sku":"NO.9878","nombre":"Disfraz Pirata sexy","marca":"Salta Sex Shop","piso":0},{"sku":"NO.P71110","nombre":"Disfraz Azafata Talla Grande","marca":"Salta Sex Shop","piso":0},{"sku":"NO.P71108","nombre":"Disfraz Domestica Francesa Talla Grande","marca":"Salta Sex Shop","piso":0},{"sku":"NO.8558","nombre":"Disfraz Army","marca":"Salta Sex Shop","piso":0},{"sku":"NO.9722","nombre":"Disfraz Teacher Sexy","marca":"Salta Sex Shop","piso":0},{"sku":"NO.9711","nombre":"Disfraz Motoquera Sexy","marca":"Salta Sex Shop","piso":0},{"sku":"8556","nombre":"Disfraz Sexy Guerrillera","marca":"Salta Sex Shop","piso":0},{"sku":"NO.11169","nombre":"Disfraz Sexy Ganster","marca":"Salta Sex Shop","piso":0},{"sku":"NO.11046","nombre":"Disfraz Sexy Police","marca":"Salta Sex Shop","piso":0},{"sku":"NO.6123","nombre":"Disfraz De Demonio","marca":"Salta Sex Shop","piso":0},{"sku":"no:6063","nombre":"Disfraz Novia Importado","marca":"Malena","piso":0},{"sku":"nn","nombre":"Camiseta Sexy Man y ropa interior negra","marca":"malena","piso":1},{"sku":"NURSE NO.6310","nombre":"Disfraz Enfermera importado","marca":"malena","piso":0},{"sku":"FN-C3020","nombre":"Gel Intimo Flavored Aroma Frutilla 125 Ml","marca":"Sexitive","piso":5},{"sku":"FN-C3021","nombre":"Gel Intimo Frio Refresh 125 Ml","marca":"Fly Night","piso":5},{"sku":"FN-C2021","nombre":"Gel Intimo Frio Refresh 70 Ml","marca":"Fly Night","piso":5},{"sku":"FN-C2015","nombre":"Gel Intimo Anal 70 Ml","marca":"Fly Night","piso":5},{"sku":"FN-C3014","nombre":"Gel Intimo Anal Lub 125 Ml","marca":"Fly Night","piso":5},{"sku":"FN-C3314","nombre":"Gel Intimo Anal Lub 200 Ml","marca":"Fly Night","piso":5},{"sku":"FN-C3316","nombre":"Gel Intimo Neutro 200 Ml","marca":"Fly Night","piso":5},{"sku":"FN-C3318","nombre":"Gel Intimo Calor Hot Power 200 Ml","marca":"Fly Night","piso":5},{"sku":"BL-15100","nombre":"Vibrador B Yours - Double Penetrator","marca":"Blush","piso":0},{"sku":"BL-67416","nombre":"Vibrator Revive - Luscious","marca":"Blush","piso":0},{"sku":"BL-22122","nombre":"Vibrator Revive - Petite G","marca":"Blush","piso":0},{"sku":"BL-14208","nombre":"Vibrator The Realm - Minotaur","marca":"Blush","piso":3},{"sku":"FT-471249","nombre":"Masturbator Venera","marca":"SS Mayorista","piso":2},{"sku":"FT-100112","nombre":"Kit Bondage 7 Piezas Infarta","marca":"Infarta","piso":3},{"sku":"FT-100112","nombre":"Kit Bondage 7 Piezas Infarta","marca":"Infarta","piso":3},{"sku":"FA-0520-05-1","nombre":"Palmeta Luxury Aplaudidora Con Tachas","marca":"SS Mayorista","piso":0},{"sku":"BI-026238","nombre":"Penis Sleeve Big Man","marca":"Baile","piso":5},{"sku":"BI-300028","nombre":"Besador de Clitoris Vibrador","marca":"Pretty Love","piso":1},{"sku":"112","nombre":"Bucaneras de Red con puntilla ancha","marca":"Malena","piso":2},{"sku":"112","nombre":"Bucaneras de Red con puntilla ancha","marca":"Malena","piso":2},{"sku":"112","nombre":"Bucaneras de Red con puntilla ancha","marca":"Malena","piso":2},{"sku":"m111neg","nombre":"Bucaneras de Lycra con puntilla ancha","marca":"Malena","piso":2},{"sku":"m111bla","nombre":"Bucaneras de Lycra con puntilla ancha","marca":"Malena","piso":2},{"sku":"m111roj","nombre":"Bucaneras de Lycra con puntilla ancha","marca":"Malena","piso":2},{"sku":"08","nombre":"Less Rutera Abierta 08","marca":"malena","piso":2},{"sku":"08","nombre":"Less Rutera Abierta 08","marca":"malena","piso":2},{"sku":"08","nombre":"Less Rutera Abierta 08","marca":"malena","piso":2},{"sku":"CN330325415","nombre":"Set 7 Fundas Elasticas","marca":"Infarta","piso":10},{"sku":"QX-007-MR","nombre":"Mr. Play Anal Douche BLKM6","marca":"Extasy","piso":2},{"sku":"ST-BU-0076 ROSA","nombre":"BULLET 13 pink","marca":"Sex Therapy","piso":5},{"sku":"QX-006-MR","nombre":"Mr. Play Anal Douche BLKM7","marca":"Extasy","piso":2},{"sku":"bd PUCHES","nombre":"Crema Intensificante Black Dragon 10Ml","marca":"ss","piso":5},{"sku":"FN-C2019","nombre":"Gel Intimo Retardante One More Time 70 Ml","marca":"Fly Night","piso":5},{"sku":"J2008-17-1","nombre":"Satisfyer Double Love Black","marca":"Satisfyer","piso":1},{"sku":"FA-1012-02-02","nombre":"Musleras P�as Negro","marca":"SS Mayorista","piso":0},{"sku":"585 mordisco","nombre":"Disfraz Policia","marca":"SS Mayorista","piso":2},{"sku":"MD008","nombre":"Disfraz Diablita","marca":"SS Mayorista","piso":2},{"sku":"MD003","nombre":"Disfraz Enfermera","marca":"SS Mayorista","piso":2},{"sku":"MD009","nombre":"Disfraz Caperucita","marca":"SS Mayorista","piso":2},{"sku":"5403","nombre":"Body De Encaje Negro","marca":"Malena","piso":2},{"sku":"805","nombre":"Body De Puntilla 805","marca":"Malena","piso":2},{"sku":"805","nombre":"Body De Puntilla 805","marca":"Malena","piso":2},{"sku":"805","nombre":"Body De Puntilla 805","marca":"Malena","piso":2},{"sku":"601","nombre":"Corset De Tul Negro","marca":"Malena","piso":2},{"sku":"M5402BLA","nombre":"Body De Encaje Con Red","marca":"malena","piso":2},{"sku":"M5402NEG","nombre":"Body De Encaje Con Red","marca":"malena","piso":2},{"sku":"M304NEG","nombre":"Conjunto Triangulo De Encaje Negro","marca":"SSM","piso":2},{"sku":"M305ROJ","nombre":"Conjunto De Puntilla Con Tiras Anchas Rojo","marca":"SS Mayorista","piso":2},{"sku":"M208BOR","nombre":"Panty Opaca Colegial Bordo","marca":"SS Mayorista","piso":0},{"sku":"108","nombre":"Less Abierta Regulable","marca":"Malena","piso":2},{"sku":"108","nombre":"Less Abierta Regulable","marca":"Malena","piso":2},{"sku":"108","nombre":"Less Abierta Regulable","marca":"Malena","piso":2},{"sku":"M10","nombre":"Less Con Aro De Strass","marca":"malena","piso":2},{"sku":"M10","nombre":"Less Con Aro De Strass","marca":"malena","piso":2},{"sku":"M10","nombre":"Less Con Aro De Strass","marca":"malena","piso":2},{"sku":"M2007NEG","nombre":"Babydoll Strapless Y Less De Puntilla Negro 2007","marca":"SS Mayorista","piso":2},{"sku":"M395NEG","nombre":"Conjunto De Puntilla Con Arnes Y Less Doble Tira Negro","marca":"SS Mayorista","piso":2},{"sku":"M375NEG","nombre":"Conjunto De Puntilla Con Corpino Abierto Y Arnes De Cintura Negro 375","marca":"SS Mayorista","piso":2},{"sku":"SHD-S388-2","nombre":"Vibrador Succionador Heart Of Ocean","marca":"SS Mayorista","piso":5},{"sku":"BI-210213","nombre":"Anillo Vibrador Varita Anal Silicona 10 Func","marca":"Pretty Love","piso":3},{"sku":"md005","nombre":"Disfraz Mucama - MD005","marca":"Malena","piso":2},{"sku":"FN-C2016","nombre":"Gel Intimo Neutro 70 Ml","marca":"Fly Night","piso":5},{"sku":"FT-150908","nombre":"Fuelle para bomba Sleeve","marca":"SS Mayorista","piso":3},{"sku":"BL-57853","nombre":"Performance Packer 13Cm Vanilla","marca":"SS Mayorista","piso":0},{"sku":"FT-342629","nombre":"Vibrator Monaco","marca":"infarta","piso":3},{"sku":"FT-342636","nombre":"Vibrator Paris","marca":"infarta","piso":3},{"sku":"FT-471521","nombre":"Massager Orbian - Masajeador","marca":"Infarta","piso":3},{"sku":"FT-342615","nombre":"Vibrator Lyria","marca":"Infarta","piso":1},{"sku":"FT-771631","nombre":"Rabbit Vibrator Aurisma","marca":"Infarta","piso":1},{"sku":"FT-752261","nombre":"Masturbator Zycor","marca":"Infarta","piso":1},{"sku":"FT-771715","nombre":"Suction Vibrator Petaluxe","marca":"infarta","piso":1},{"sku":"FT-771613","nombre":"Rabbit Vibrator Roselix","marca":"infarta","piso":1},{"sku":"FT-771619","nombre":"Rabbit Vibrator Lavendre","marca":"infarta","piso":1},{"sku":"FT-771607","nombre":"Rabbit Vibrator Pearlux","marca":"infarta","piso":1},{"sku":"FT-150922","nombre":"Pump Nipple Suction","marca":"SS Mayorista","piso":1},{"sku":"FT-471198","nombre":"Anal Vibrator Deepsync","marca":"Infarta","piso":2},{"sku":"FT-975477","nombre":"Anal Vibrator Aurelia","marca":"infarta","piso":2},{"sku":"BST-SO2402","nombre":"Arnes realista Cameron","marca":"Sex Therapy","piso":2},{"sku":"SHD-S417-2","nombre":"Vibrador Chad 9 Func Recargable","marca":"SS Mayorista","piso":2},{"sku":"FT-863752","nombre":"ANAL PLUG VIBRATOR LUNARIS","marca":"Infarta","piso":2},{"sku":"SE-1580-20-3","nombre":"Packer Gear Silicone Packing Penis","marca":"Extasy","piso":0},{"sku":"RD523","nombre":"PDX Elite Vibrating Oral Stroker","marca":"Extasy","piso":2},{"sku":"rd288","nombre":"Masturbador PDX Roto-Bator Mouth","marca":"Extasy","piso":2},{"sku":"PD5902-23","nombre":"Fantasy C-Ringz Mr. Big Cock Ring & Ball Stretcher","marca":"Extasy","piso":0},{"sku":"FA-0591-01-1","nombre":"Pechera Luxury Cruzada Con Hebillas","marca":"SS Mayorista","piso":0},{"sku":"FA-0151-01-1","nombre":"Arn�s Hamaca De Pareja Con Manillar","marca":"SS Mayorista","piso":2},{"sku":"ST-CR-0011","nombre":"Anillo vibrador Kevin","marca":"Sex therapy","piso":3},{"sku":"FA-0622-01-01","nombre":"Collar Choker Corazon B/N","marca":"Infarta","piso":0},{"sku":"FA-0631-01-01","nombre":"Collar Choker Sado","marca":"Infarta","piso":0},{"sku":"FA-0053-01-1","nombre":"Kit De Sujecion De Cama","marca":"SS Mayorista","piso":2},{"sku":"FA-0126-01-1","nombre":"Arnes De Cintura Y Muslera Con Esposas de Eco Cuero","marca":"SS Mayorista","piso":2},{"sku":"MR-544","nombre":"Disfraz de Colegiala","marca":"malena","piso":2},{"sku":"10470-02-02","nombre":"Fatal Arnes Body","marca":"malena","piso":0},{"sku":"10470-02-03","nombre":"Fatal Arnes Body","marca":"malena","piso":0},{"sku":"FA-0702-01-4","nombre":"Mordaza Con Argolla De 4Cm - Eco Cuero Negro","marca":"SS Mayorista","piso":2},{"sku":"FA-0123-01-1","nombre":"Arnes Body Bow Y Esposas De Mano","marca":"SS Mayorista","piso":2},{"sku":"FA-0124-01-1","nombre":"Arnes Esposas De Mano Y Tobillo - Eco Cuero","marca":"SS Mayorista","piso":2},{"sku":"FA-0128-01-1","nombre":"Inmovilizador De Nuca Y Muslos - Eco-Cuero","marca":"SS Mayorista","piso":2},{"sku":"ST-GT80","nombre":"Sextual Gel Lubricante Anal Rosas 80 Ml","marca":"Sextual","piso":5},{"sku":"FN-C3523","nombre":"Gel Diabolico Fisting Anal Vaginal - 500Ml","marca":"Fly Night","piso":5},{"sku":"SHD-S245","nombre":"Anillo Vibrador Nightcrawler","marca":"SS Mayorista","piso":0},{"sku":"ST-GN30","nombre":"Sextual Gel Lubricante Neutro 30Ml","marca":"Sextual","piso":10},{"sku":"ST-CR-0082","nombre":"ANILLO VIBRADOR OPEN MIND RING 1 - ST-CR-0082","marca":"SS Mayorista","piso":0},{"sku":"IT02","nombre":"Perfume It Femme Florale Aphrodisiac","marca":"Sexitive","piso":2},{"sku":"FHE","nombre":"Perfume For Him Elixir- 100 ml","marca":"Sexitive","piso":2},{"sku":"fh02","nombre":"Perfume For Him VIP- 100 ml","marca":"Sexitive","piso":2},{"sku":"IN02","nombre":"Perfume Inevitable Men VIP","marca":"Sexitive","piso":2},{"sku":"PM01","nombre":"Perfume Petit Mort Aphrodisiac","marca":"Sexitive","piso":2},{"sku":"IT01","nombre":"Perfume It Femme 60 ML","marca":"Sexitive","piso":2},{"sku":"163-R","nombre":"Zunga Colaless Con Abrojo Pasionel 163","marca":"Malena","piso":0},{"sku":"163-B","nombre":"Zunga Colaless Con Abrojo Pasionel 163","marca":"Malena","piso":0},{"sku":"11-146-54","nombre":"Anillo Mini Vibe Anillo Lengua","marca":"SS Mayorista","piso":0},{"sku":"FN-C2020","nombre":"Gel Intimo Flavored Aroma Frutilla 70 Ml","marca":"Sexitive","piso":2},{"sku":"HR2","nombre":"Heroe Performance - Spray Masculino","marca":"Sexitive","piso":2},{"sku":"HR1","nombre":"Heroe Pro Long Extra Time - Spray Masculino-","marca":"Sexitive","piso":0},{"sku":"24x6","nombre":"Protesis Pellizcable hueca Gigante 24x6","marca":"Extasy","piso":5},{"sku":"FHG","nombre":"Perfume Afrodisiaco For Him Gentleman","marca":"Sexitive","piso":2},{"sku":"ST-SU-0040","nombre":"Ana 12","marca":"Sex Therapy","piso":3},{"sku":"BI-010045E","nombre":"Funda texturada","marca":"Baile","piso":5},{"sku":"BI-010045D","nombre":"Funda texturada","marca":"Baile","piso":5},{"sku":"BI-010045C","nombre":"Funda texturada","marca":"Baile","piso":5},{"sku":"SWD045+17012","nombre":"Anillo vibrador black - SWD045+17012","marca":"Sex Therapy","piso":3},{"sku":"LY72B01-gold","nombre":"Bullet gold - LY72B01-gold","marca":"Sex Therapy","piso":5},{"sku":"ST-MA-0035","nombre":"Masturbador Succionador y vibrador XP3","marca":"Sex Therapy","piso":1},{"sku":"BI-026206","nombre":"Extension Peneana 6 - 6 cm. mas","marca":"SS Mayorista","piso":5},{"sku":"BI-026227","nombre":"Extension Peneana 7'' - 6 cm. mas","marca":"Baile","piso":5},{"sku":"BI-026228","nombre":"Extension Peneana 6.2'' 4cm mas","marca":"Baile","piso":5},{"sku":"J2018-87-1","nombre":"Satisfyer Mono Flex","marca":"Satisfyer","piso":1},{"sku":"PD3956-23","nombre":"Inflatable Vibrating Strapless Strap-On","marca":"Extasy","piso":0},{"sku":"LV250002","nombre":"Training Master Double Side Stroker Pussy and Mouth","marca":"Lovetoy","piso":2},{"sku":"BI-014405W","nombre":"Vibrador Huevo Debby 12 Funciones","marca":"SS Mayorista","piso":3},{"sku":"BI-014377W","nombre":"Vibrador Huevo Bradley 12 Funciones","marca":"SS Mayorista","piso":3},{"sku":"BW-010026","nombre":"Jessica Strap on Arnes con Funda Extensora","marca":"Baile","piso":2},{"sku":"ws-eh60","nombre":"Erox Hombre X60 Caps","marca":"SS Mayorista","piso":0},{"sku":"FT-0333","nombre":"Lazo erector regulable Box","marca":"SS Mayorista","piso":5},{"sku":"BI-014826","nombre":"Succionador Clitoris Emily Recargable","marca":"Extasy","piso":2},{"sku":"ms21","nombre":"Lubricante Miss V Sedanal Silicona hidrosolubre","marca":"Miss V","piso":5},{"sku":"CTL-10277","nombre":"Vibrador Double Vibes","marca":"Control","piso":0},{"sku":"20x5","nombre":"Protesis Pellizcable hueca 20x5","marca":"Extasy","piso":5},{"sku":"PD5644-22","nombre":"Strap on Harness 7\" Two Cocks One Hole","marca":"Extasy","piso":3},{"sku":"1126-02","nombre":"Esposas 34 mm Cadena 10 cm","marca":"Extasy","piso":0},{"sku":"Esposas Fijas Con Ar1126-04o Negro","nombre":"Esposas 46 mm Cadena 1 m","marca":"Extasy","piso":0},{"sku":"BI-026200","nombre":"Funda Net Sleeve","marca":"Baile","piso":0},{"sku":"LV2242","nombre":"8\" King Sized Anal Bumper","marca":"Lovetoy","piso":2},{"sku":"LV715118","nombre":"Igen Easy Strap On 8.5\"","marca":"Extasy","piso":2},{"sku":"SA124-B","nombre":"Boxer de tul transparente 124","marca":"Malena","piso":0},{"sku":"SA124-N","nombre":"Boxer de tul transparente 124","marca":"Malena","piso":0},{"sku":"124roj","nombre":"Boxer de tul transparente 124","marca":"Malena","piso":0},{"sku":"row-361","nombre":"Medias bucanera de red 964","marca":"Malena","piso":2},{"sku":"row-362","nombre":"Medias bucanera de red 964","marca":"Malena","piso":2},{"sku":"row-363","nombre":"Medias bucanera de red 964","marca":"Malena","piso":2},{"sku":"row-364","nombre":"Body de encaje 752","marca":"Malena","piso":2},{"sku":"row-365","nombre":"Body de encaje 752","marca":"Malena","piso":2},{"sku":"row-366","nombre":"Body de encaje 752","marca":"Malena","piso":2},{"sku":"1956-76","nombre":"Solid Steel Madness Plug","marca":"Extasy","piso":1},{"sku":"1956-71","nombre":"Steel Prostate Massager","marca":"Extasy","piso":1},{"sku":"PD3382-23","nombre":"Vibrating Double Delight Strap-On","marca":"Extasy","piso":2},{"sku":"LV314102","nombre":"Add 1\" Pleasure X-Tender Vibrating Double Penis Sleeve","marca":"Lovetoy","piso":2},{"sku":"LV310019","nombre":"Flawless Clear Prostate Plug 6''","marca":"Lovetoy","piso":3},{"sku":"LV310018","nombre":"Flawless Clear Double Dildo 12''","marca":"Lovetoy","piso":3},{"sku":"BW-008078Q","nombre":"Bigger Joy","marca":"Extasy","piso":1},{"sku":"BI-040015","nombre":"Slender Bender","marca":"Extasy","piso":2},{"sku":"RD528","nombre":"PDX Elite Suck-N-Pump Stroker","marca":"Extasy","piso":2},{"sku":"PD4670-00","nombre":"Beginner's Fantasy Kit","marca":"Extasy","piso":0},{"sku":"row-380","nombre":"Sex Machine Enhot","marca":"Extasy","piso":1},{"sku":"WDA","nombre":"Dados Er�ticos Kamasutra + Lugares","marca":"SS Mayorista","piso":2},{"sku":"WDA","nombre":"Dados Acciones Y Lugares","marca":"SS Mayorista","piso":2},{"sku":"GLO01","nombre":"Dados Love Play","marca":"SS Mayorista","piso":2},{"sku":"FA-0428-00-1","nombre":"Bozal Tapa Boca Eco Cuero Negro","marca":"Infarta","piso":1},{"sku":"FA-0429-00-1","nombre":"Bozal Tapa Boca Con Puas Eco Cuero Negro","marca":"Infarta","piso":1},{"sku":"FA-0810-01-01","nombre":"Cinta Bondage Negro 8Mts","marca":"Infarta","piso":0},{"sku":"30-510-41","nombre":"Consolador Suck Act Real Xxl S.Michel","marca":"Caiman","piso":2},{"sku":"AL-30393","nombre":"Anillo Vibrador Bullet Lastic Ring","marca":"SSM","piso":0},{"sku":"BI-210185","nombre":"Crazy Bull Anillo Doble Silicona 8,5Cmx 1,3Cm","marca":"Crazy Bull","piso":1},{"sku":"BI-210181","nombre":"Crazy Bull Anillo Silicona 5Cmx 1,3Cm","marca":"Crazy Bull","piso":1},{"sku":"BL-81101","nombre":"Luxe - Rump Rimmer","marca":"Blush","piso":2},{"sku":"BL-01802","nombre":"Performance - Penetrator Anal Plug prostatico","marca":"Blush","piso":2},{"sku":"BW-022021","nombre":"Ultra Female Harness","marca":"Extasy","piso":2},{"sku":"BW-022049","nombre":"Ultra Passionate Double Harness","marca":"Baile","piso":2},{"sku":"2117-23","nombre":"Realistic Jeff Stricker17x3.8","marca":"Extasy","piso":2},{"sku":"2105-03","nombre":"Realistic Super Cock 19x4.5cm","marca":"Extasy","piso":2},{"sku":"2105-23","nombre":"Realistic Super Cock Mulatto","marca":"Extasy","piso":2},{"sku":"19x3,5","nombre":"Protesis Pellizcable 19 x 3,5 cm","marca":"Extasy","piso":5},{"sku":"20x4","nombre":"Protesis Pellizcable hueca 20x4","marca":"Extasy","piso":5},{"sku":"19x4","nombre":"Protesis Pellizcable hueca 19x4","marca":"Extasy","piso":5},{"sku":"15x4","nombre":"Protesis Pellizcable hueca 15x4","marca":"Extasy","piso":5},{"sku":"1956-73","nombre":"Metal Balls 2,5 cm","marca":"Extasy","piso":0},{"sku":"1956-26-1","nombre":"Steel Chastity Cage Long","marca":"Extasy","piso":2},{"sku":"LV2614","nombre":"Silicone Fantasy Double Prober","marca":"Lovetoy","piso":3},{"sku":"PD2103-23","nombre":"Suck N' Stroke Head Pump","marca":"Extasy","piso":2},{"sku":"LV250001","nombre":"Training Master Double Side Stroker Pussy and Anus","marca":"Lovetoy","piso":2},{"sku":"BM-00900T58-2","nombre":"Vacuum Cup Masturbator Mouth","marca":"Extasy","piso":2},{"sku":"RD522","nombre":"PDX Elite Vibrating Anal Stroker","marca":"Extasy","piso":2},{"sku":"14738","nombre":"Svakom Iris","marca":"Svakom","piso":0},{"sku":"LV443002","nombre":"Power Plus Soft Silicone Pro Ring","marca":"LOVETOY","piso":3},{"sku":"BI-014059A","nombre":"Mini Vibe 10","marca":"Extasy","piso":5},{"sku":"BGM","nombre":"Bomba con manija","marca":"SSM","piso":5},{"sku":"BM-010066","nombre":"Bomba Vibrating Penis Pump","marca":"Extasy","piso":2},{"sku":"2102-42","nombre":"Realistic Cock Vibro 16x4cm","marca":"Extasy","piso":2},{"sku":"2104-02","nombre":"Consolador Kong Vibro 20x6cm","marca":"Extasy","piso":2},{"sku":"2104-13","nombre":"Consolador Mini Kong 17x4.5cm","marca":"Extasy","piso":2},{"sku":"1971-20","nombre":"Lovense Lush 2","marca":"Extasy","piso":2},{"sku":"LV310020","nombre":"Flawless Clear Prostate Plug 6.5''","marca":"Lovetoy","piso":3},{"sku":"PD4136-23","nombre":"Fantasy X-tensions Vibrating Power Cage","marca":"Baile","piso":3},{"sku":"BM-009156U","nombre":"Crazy Bull Isabel","marca":"Extasy","piso":3},{"sku":"BM-009194K","nombre":"Crazy Bull 3D Anus","marca":"Crazy Bull","piso":3},{"sku":"1956-15","nombre":"Cock n' Ball Ring","marca":"Extasy","piso":1},{"sku":"LV1665","nombre":"Bondage Fetish Deluxe Douche","marca":"Lovetoy","piso":2},{"sku":"LV1666","nombre":"Bondage Fetish Deluxe Douche","marca":"Lovetoy","piso":2},{"sku":"BM-009176-1","nombre":"Bigger Man Plus","marca":"Extasy","piso":1},{"sku":"PD4426-23","nombre":"Beginner's Butt Plug","marca":"Extasy","piso":0},{"sku":"BW-022033","nombre":"Double Play Strap-On","marca":"Extasy","piso":2},{"sku":"166","nombre":"Boxer de Encaje","marca":"Salta Sex Shop","piso":0},{"sku":"166","nombre":"Boxer de Encaje","marca":"Salta Sex Shop","piso":0},{"sku":"152","nombre":"Body Hombre","marca":"Salta Sex Shop","piso":1},{"sku":"103-N","nombre":"Cola Less Hombre 103","marca":"Salta Sex Shop","piso":0},{"sku":"103-B","nombre":"Cola Less Hombre 103","marca":"Salta Sex Shop","piso":0},{"sku":"103-R","nombre":"Cola Less Hombre 103","marca":"Salta Sex Shop","piso":0},{"sku":"PR-JUMV","nombre":"Bala Prime Fantasy #Mv","marca":"Prime","piso":0},{"sku":"FA-0018-01-1","nombre":"Esposas Eco-Cuero Con Mango Tirador","marca":"SSM","piso":2},{"sku":"GLO011","nombre":"Let'S Fuck Juego De Cartas + Dados","marca":"Sexitive","piso":2},{"sku":"FT-150894","nombre":"Repuesto Fuelle Bomba","marca":"SS Mayorista","piso":2},{"sku":"CW30003-1","nombre":"Repuesto Fuelle Bomba","marca":"SS Mayorista","piso":2},{"sku":"FT-150901","nombre":"Repuesto Fuelle Bomba","marca":"SS Mayorista","piso":2},{"sku":"GLO12","nombre":"Fantasy Pleasure Game","marca":"Sexitive","piso":2},{"sku":"C51","nombre":"Perfume Crazy Girl Aphrodisiac Fragance 60 Ml","marca":"Sexitive","piso":2},{"sku":"30-711-21","nombre":"Consolador Curvo Con Sopapa","marca":"Caiman","piso":0},{"sku":"30-707-54","nombre":"Emperador Jelly C/Sopapa","marca":"Caiman","piso":0},{"sku":"30-711-54","nombre":"Consolador Curvo Con Sopapa","marca":"Caiman","piso":0},{"sku":"10-605-54","nombre":"Vibrador Super Rojo 18X4.5","marca":"Caiman","piso":2},{"sku":"10-602-21","nombre":"Vibrador Vara 19X4","marca":"Caiman","piso":2},{"sku":"10-605-22","nombre":"Vibrador Super Negro 21X5","marca":"Caiman","piso":2},{"sku":"BI-014075","nombre":"Anillo Vibrador Tongue","marca":"Baile","piso":3},{"sku":"BI-014081","nombre":"Anillo Vibrador Sweet","marca":"Baile","piso":0},{"sku":"BL-01705","nombre":"Anal Adventures Platinum","marca":"Blush","piso":2},{"sku":"EE73-636-0817","nombre":"Satisfyer Masturbador Men One","marca":"Satisfyer","piso":1},{"sku":"J2018-U19","nombre":"Satisfyer Traveler","marca":"Satisfyer","piso":1},{"sku":"BI-010132-1","nombre":"Anillo Vibrador Conejito","marca":"Baile","piso":0},{"sku":"X-5179","nombre":"Anillo vibrador X-Men 2","marca":"Infarta","piso":0},{"sku":"X-5181","nombre":"Anillo vibrador X-Men","marca":"Infarta","piso":0},{"sku":"BI-014719","nombre":"Bogey 10 Func 15Cm X 2.6Cm","marca":"Pretty Love","piso":3},{"sku":"CW120901-2","nombre":"Masturbador Suck Vaginal","marca":"CanWin","piso":2},{"sku":"BM-00900T46N-1","nombre":"Masturbador Crazy Bull Delia Con Base","marca":"Crazy Bull","piso":3},{"sku":"BW-022066z","nombre":"Dual Penis Strap On","marca":"SSM","piso":6},{"sku":"BW-022020","nombre":"Double Female Harness","marca":"Extasy","piso":2},{"sku":"BW-022008","nombre":"Hard Strap On","marca":"Extasy","piso":2},{"sku":"272-N","nombre":"Arnes portaligas 272","marca":"Salta Sex Shop","piso":0},{"sku":"272-B","nombre":"Arnes portaligas 272","marca":"Salta Sex Shop","piso":0},{"sku":"271-N","nombre":"Arnes portaligas 271","marca":"Salta Sex Shop","piso":0},{"sku":"271-B","nombre":"Arnes portaligas 271","marca":"Salta Sex Shop","piso":0},{"sku":"273-N","nombre":"Arnes para piernas 273","marca":"Salta Sex Shop","piso":0},{"sku":"273-B","nombre":"Arnes para piernas 273","marca":"Salta Sex Shop","piso":0},{"sku":"263-N","nombre":"Arnes para Busto 263","marca":"Salta Sex Shop","piso":0},{"sku":"263-B","nombre":"Arnes para Busto 263","marca":"Salta Sex Shop","piso":0},{"sku":"265-N","nombre":"Arnes para Busto 265","marca":"Salta Sex Shop","piso":0},{"sku":"265-B","nombre":"Arnes para Busto 265","marca":"Salta Sex Shop","piso":0},{"sku":"262-N","nombre":"Arnes para Busto 262","marca":"Salta Sex Shop","piso":0},{"sku":"262-B","nombre":"Arnes para Busto 262","marca":"Salta Sex Shop","piso":0},{"sku":"FN-C3323","nombre":"Gel Diabolico Fisting Anal Vaginal - 200Ml","marca":"Fly Night","piso":5},{"sku":"LV764001","nombre":"Ducha anal - Enema - Fetish Deluxe Douche","marca":"LOVETOY","piso":3},{"sku":"ST-GT200","nombre":"Sextual Gel Lubricante Anal Rosas 200 Ml","marca":"Sextual","piso":5},{"sku":"ST-GT30","nombre":"Sextual Gel Lubricante Anal Rosas 30Ml","marca":"Sextual","piso":10},{"sku":"FN-C3016","nombre":"Gel Intimo Neutro 125 Ml","marca":"Fly Night","piso":5},{"sku":"FN-C3018","nombre":"Gel Intimo Calor Hot Power 125 Ml","marca":"Fly Night","piso":5},{"sku":"row-557","nombre":"Maxx Super Fino X3","marca":"Maxx","piso":5},{"sku":"row-558","nombre":"Maxx Espermicida X3","marca":"Maxx","piso":5},{"sku":"row-559","nombre":"Maxx Texturado X3","marca":"Maxx","piso":5},{"sku":"row-560","nombre":"Maxx Tachas X3","marca":"Maxx","piso":5},{"sku":"row-561","nombre":"Maxx Ultra Fino X3","marca":"Maxx","piso":5},{"sku":"row-562","nombre":"Maxx Mega X3","marca":"Maxx","piso":5},{"sku":"row-563","nombre":"Maxx Anatomico X3","marca":"Maxx","piso":5},{"sku":"MX-PLUBNI12","nombre":"Maxx Super Lubricado X3","marca":"Maxx","piso":5},{"sku":"BMR","nombre":"Bomba con robinete","marca":"SSM","piso":5},{"sku":"BI-009002N","nombre":"Passion Lady Temptation","marca":"Extasy","piso":2},{"sku":"GLO09","nombre":"Extreme Games 6 En 1","marca":"Sexitive","piso":2},{"sku":"GLO10","nombre":"Erotic Tarot","marca":"Sexitive","piso":2},{"sku":"FN-C4001","nombre":"Juego Mistery Box","marca":"Fly Night","piso":2},{"sku":"GLO16","nombre":"Kamasutra 50 Posiciones","marca":"Sexitive","piso":2},{"sku":"CW110558","nombre":"Bomba Passion Pump Manija","marca":"CanWin","piso":2},{"sku":"CW110409","nombre":"Bomba Erectora Con Motor De Succion - Bateria AAA","marca":"CanWin","piso":2},{"sku":"BW-001061","nombre":"Vibrador Multispeed 20Cm X 4Cm","marca":"SSM","piso":0},{"sku":"10-602-22","nombre":"Vibrador Vara Negra 16X3,5 Cm","marca":"Caiman","piso":2},{"sku":"SHD-S376","nombre":"Beso Frances Recargable","marca":"S-Hande","piso":1},{"sku":"BM-009133","nombre":"Masturbador Texturado Super Soft","marca":"Crazy Bull","piso":3},{"sku":"90-710-21","nombre":"ARN�S MINI CLITERIFIC PIEL","marca":"Caiman","piso":2},{"sku":"90-702-21","nombre":"ARN�S BANANIN PIEL","marca":"Caiman","piso":2},{"sku":"19-702-21","nombre":"Arnes Doble Micro Bananin","marca":"Caiman","piso":2},{"sku":"00-139-54","nombre":"Varita anal Roja","marca":"Caiman","piso":2},{"sku":"J2018-97","nombre":"Satisfyer Little Secret","marca":"Satisfyer","piso":1},{"sku":"J2018-159-1","nombre":"Satisfyer Ultra Power Bullet 7","marca":"Satisfyer","piso":1},{"sku":"J2018-163-2","nombre":"Satisfyer Ultra Power Bullet 5","marca":"Satisfyer","piso":1},{"sku":"J2018-166-2","nombre":"Satisfyer Ultra Power Bullet 1","marca":"Satisfyer","piso":1},{"sku":"FA-0115-04-1","nombre":"Arnes Eco-Cuero Femenino 3Cm - Correa Regulable","marca":"Infarta","piso":2},{"sku":"FT-SMG002","nombre":"Gancho Anal Metal Con Aro 195Gs Bulk","marca":"Infarta","piso":1},{"sku":"BM-009158U","nombre":"Masturbador Lillian 13Cm X 6Cm","marca":"Extasy","piso":2},{"sku":"542","nombre":"Catsweet de red 542","marca":"Malena","piso":2},{"sku":"542","nombre":"Catsweet de red 542","marca":"Malena","piso":2},{"sku":"542","nombre":"Catsweet de red 542","marca":"Malena","piso":2},{"sku":"ft-sm2-s","nombre":"Plug Anal dorado con joya","marca":"Infarta","piso":5},{"sku":"ft-sm2-m","nombre":"Plug Anal dorado con joya","marca":"Infarta","piso":3},{"sku":"ft-sm2-L","nombre":"Plug Anal dorado con joya","marca":"Infarta","piso":2},{"sku":"BL-91705","nombre":"Performance Vs5","marca":"SSM","piso":3},{"sku":"BL-91735","nombre":"Performance Vs8","marca":"SSM","piso":3},{"sku":"BM-009157U","nombre":"Masturbador Vagina Jane","marca":"Crazy Bull","piso":3},{"sku":"D55","nombre":"Massage Candle Vainilla Coconut 30gr","marca":"Sexitive","piso":2},{"sku":"D51","nombre":"Massage Candle Caramel Strawberries 30gr","marca":"Sexitive","piso":2},{"sku":"D62","nombre":"Massage Candle Latte & Dulce De Leche 30gr","marca":"Sexitive","piso":2},{"sku":"D64","nombre":"Massage Candle Mango & Maracuya 30gr","marca":"Sexitive","piso":2},{"sku":"D65","nombre":"Massage candle souffle strawberries 30g","marca":"Sexitive","piso":2},{"sku":"FT-880217","nombre":"Sex Machine Jaime","marca":"Infarta","piso":1},{"sku":"J2008-21","nombre":"Satisfyer Royal One","marca":"Satisfyer","piso":1},{"sku":"00-605-31","nombre":"Cyber Macizo Super Real 15x4cm","marca":"Caiman","piso":2},{"sku":"SA011","nombre":"Satisfyer Lovely Honey","marca":"Satisfyer","piso":1},{"sku":"BW-022050","nombre":"Arnes Protesis Vibrador 15,5CM X 4CM","marca":"Extasy","piso":2},{"sku":"608-N","nombre":"Slip hombre con velcro","marca":"SEXY EDEN","piso":0},{"sku":"608-B","nombre":"Slip hombre con velcro","marca":"SEXY EDEN","piso":0},{"sku":"608-R","nombre":"Slip hombre con velcro","marca":"SEXY EDEN","piso":0},{"sku":"4500-01","nombre":"Pheromonas Hombre","marca":"Extasy","piso":3},{"sku":"2102-03","nombre":"Realistic Cock 16x4cm","marca":"Extasy","piso":2},{"sku":"4500-01","nombre":"Pheromonas Mujer","marca":"Salta Sex Shop","piso":3},{"sku":"2104-03","nombre":"Consolador Kong 20x6cm","marca":"Extasy","piso":2},{"sku":"BI-014490-2","nombre":"Bolas Kegel tighten up 1 (bolas chinas siliconadas)","marca":"Pretty Love","piso":1},{"sku":"BI-014490","nombre":"Bolas Kegel tighten up 1 (bolas chinas siliconadas)","marca":"Pretty Love","piso":1},{"sku":"BI-014491-1","nombre":"Bolas Kegel tighten up 2 (bolas chinas siliconadas)","marca":"Pretty Love","piso":1},{"sku":"D3605","nombre":"Midnight rose succionador multifuncional recargable usb","marca":"Extasy","piso":2},{"sku":"742","nombre":"Body vinilo 742","marca":"Sexy Eden","piso":2},{"sku":"742","nombre":"Body vinilo 742","marca":"Sexy Eden","piso":2},{"sku":"744","nombre":"Body vinilo 744","marca":"Sexy Eden","piso":2},{"sku":"722","nombre":"Body vinilo 722","marca":"Sexy Eden","piso":2},{"sku":"755","nombre":"Body vinilo 755","marca":"Sexy Eden","piso":2},{"sku":"755","nombre":"Body vinilo 755","marca":"Sexy Eden","piso":2},{"sku":"717N","nombre":"LESS VINILO 717","marca":"SEXY EDEN","piso":2},{"sku":"717 R","nombre":"LESS VINILO 717","marca":"SEXY EDEN","piso":2},{"sku":"710 N","nombre":"Less vinilo 710","marca":"SEXY EDEN","piso":2},{"sku":"710 R","nombre":"Less vinilo 710","marca":"SEXY EDEN","piso":2},{"sku":"30-403-21","nombre":"Doble penetraci�n piel con sopapa","marca":"Caiman","piso":2},{"sku":"m204leo","nombre":"Portaligas animal print 204","marca":"Malena","piso":2},{"sku":"row-644","nombre":"Babydoll, colaless y portaligas de puntilla 2005","marca":"Malena","piso":2},{"sku":"row-645","nombre":"Babydoll, colaless y portaligas de puntilla 2005","marca":"Malena","piso":2},{"sku":"M2004LEO","nombre":"Baby doll, tanga y portaligas animal print 2004","marca":"Malena","piso":2},{"sku":"M2003SLEO","nombre":"Conjunto de animal print 2003","marca":"Malena","piso":2},{"sku":"row-648","nombre":"Colaless doble tira 105","marca":"Malena","piso":2},{"sku":"row-649","nombre":"Colaless doble tira 105","marca":"Malena","piso":2},{"sku":"105","nombre":"Colaless doble tira 105","marca":"Malena","piso":2},{"sku":"D55M","nombre":"Massage candle - scented candle sweet beauty rush - vainilla - 15 gr","marca":"Sexitive","piso":2},{"sku":"XXX01","nombre":"Aceite �leo org�smico estimulante xxx for her - 15ml","marca":"Sexitive","piso":3},{"sku":"PSP","nombre":"Pink sexy pill","marca":"sexitive","piso":3},{"sku":"J2008-15-1","nombre":"Satisfyer Double Fun Black","marca":"Satisfyer","piso":1},{"sku":"J2008-3-01","nombre":"Satisfyer Partner Double Plus Remote","marca":"Satisfyer","piso":1},{"sku":"J2018-82-2","nombre":"Satisfyer Hot Lover Pink","marca":"Satisfyer","piso":1},{"sku":"J2018-U142","nombre":"Satisfyer Lucky Libra","marca":"Satisfyer","piso":1},{"sku":"FT-SM001","nombre":"Castidad Con Candado","marca":"Infarta","piso":1},{"sku":"J2008-2-P","nombre":"Satisfyer Partner Double Classic","marca":"Satisfyer","piso":1},{"sku":"BI-014081-1","nombre":"Anillo Vibrador","marca":"Pretty Love","piso":3},{"sku":"DRN02","nombre":"Crema Intensificante Black Dragon 50Ml","marca":"Sexitive","piso":5},{"sku":"BSP","nombre":"Blue Sexy Pill","marca":"Sexitive","piso":3},{"sku":"J2018-U3","nombre":"Satisfyer Pro Deluxe Next Generation","marca":"Satisfyer","piso":3},{"sku":"J2018-U6","nombre":"Satisfyer Number One","marca":"Satisfyer","piso":1},{"sku":"J2018-139-1","nombre":"Plug-Ilicious","marca":"Satisfyer","piso":0},{"sku":"J2018-112-2","nombre":"Backdoor Lover Red","marca":"Satisfyer","piso":0},{"sku":"203 708","nombre":"Bikini Vinilo 203 708","marca":"Sexy Eden","piso":2},{"sku":"805","nombre":"Guante Cortado Vinilo 805","marca":"SEXY EDEN","piso":2},{"sku":"10-403-21","nombre":"Vibrador doble penetracion","marca":"Caiman","piso":2},{"sku":"BW-022064Z","nombre":"Arnes Vibrador 13Cm X 4Cm","marca":"SSM","piso":2},{"sku":"SHD-S241-2","nombre":"Bensons Set 3 Plug Anal Intercambiable","marca":"Salta Sex Shop","piso":0},{"sku":"J2008-3-P","nombre":"Satisfyer Partner Double Plus","marca":"Satisfyer","piso":1},{"sku":"FT-880371","nombre":"Quasar Succionador Recargable","marca":"Infarta","piso":2},{"sku":"J2018-120-2","nombre":"Satisfyer High Fly","marca":"Satisfyer","piso":1},{"sku":"WDG","nombre":"Dados Er�ticos Generala Kamasutra","marca":"Salta Sex Shop","piso":2},{"sku":"GLO03","nombre":"Sex Play Juego De Cartas + Dados","marca":"Sexitive","piso":2},{"sku":"MD015","nombre":"Disfraz de Azafata","marca":"Mordisco","piso":1},{"sku":"801","nombre":"Body de tul y encaje 801","marca":"Malena","piso":2},{"sku":"801","nombre":"Body de tul y encaje 801","marca":"Malena","piso":2},{"sku":"801","nombre":"Body de tul y encaje 801","marca":"Malena","piso":2},{"sku":"row-693","nombre":"Catsweet de encaje (aperturas con puntilla en V) 5503","marca":"Malena","piso":2},{"sku":"row-694","nombre":"Catsweet de encaje (aperturas con puntilla en V) 5503","marca":"Malena","piso":2},{"sku":"row-695","nombre":"Catsweet de encaje (aperturas con puntilla en V) 5503","marca":"Malena","piso":2},{"sku":"402","nombre":"Panty portaligas red 402","marca":"Malena","piso":2},{"sku":"402","nombre":"Panty portaligas red 402","marca":"Malena","piso":2},{"sku":"402","nombre":"Panty portaligas red 402","marca":"Malena","piso":2},{"sku":"401","nombre":"Panty portaligas lisa lycra 401","marca":"Malena","piso":2},{"sku":"401","nombre":"Panty portaligas lisa lycra 401","marca":"Malena","piso":2},{"sku":"401","nombre":"Panty portaligas lisa lycra 401","marca":"Malena","piso":2},{"sku":"325","nombre":"Conjunto de puntilla con doble tira 325","marca":"Malena","piso":2},{"sku":"325","nombre":"Conjunto de puntilla con doble tira 325","marca":"Malena","piso":2},{"sku":"325","nombre":"Conjunto de puntilla con doble tira 325","marca":"Malena","piso":2},{"sku":"302","nombre":"Conjunto de red 302","marca":"Malena","piso":2},{"sku":"302","nombre":"Conjunto de red 302","marca":"Malena","piso":2},{"sku":"302","nombre":"Conjunto de red 302","marca":"Malena","piso":2},{"sku":"222","nombre":"Panty medias de red cadenetta 222","marca":"Malena","piso":2},{"sku":"222","nombre":"Panty medias de red cadenetta 222","marca":"Malena","piso":2},{"sku":"222","nombre":"Panty medias de red cadenetta 222","marca":"Malena","piso":2},{"sku":"1002","nombre":"Pollera, band� y colaless de red 1002","marca":"Malena","piso":2},{"sku":"1002","nombre":"Pollera, band� y colaless de red 1002","marca":"Malena","piso":2},{"sku":"1002","nombre":"Pollera, band� y colaless de red 1002","marca":"Malena","piso":2},{"sku":"row-720","nombre":"Vibrador Sweet Treat (Pink/Brown)","marca":"Satisfyer","piso":0},{"sku":"C01","nombre":"Perfume Con Feromonas Para Mujer","marca":"Sexitive","piso":2},{"sku":"LUB02","nombre":"Gel Lubricante Lube Calor 130Ml","marca":"Sexitive","piso":5},{"sku":"MD010","nombre":"Disfraz Gatita","marca":"Malena","piso":2},{"sku":"MD007","nombre":"Disfraz Conejita","marca":"Malena","piso":2},{"sku":"BW-022007","nombre":"Arnes Con Consolador","marca":"SSM","piso":2},{"sku":"1957-23","nombre":"Black Body Massager","marca":"Pretty Love","piso":3},{"sku":"HM105","nombre":"Bathmate Hydro 7","marca":"Extasy","piso":2},{"sku":"GLO06","nombre":"Juego Challenge 30 Days Desaf�os","marca":"Sexitive","piso":2},{"sku":"m003","nombre":"Plug Anal Metal Rosa Con Joya","marca":"SSM","piso":3},{"sku":"m003","nombre":"Plug Anal Metal Rosa Con Joya","marca":"SSM","piso":3},{"sku":"m003","nombre":"Plug Anal Metal Rosa Con Joya","marca":"SSM","piso":3},{"sku":"FT-XC50-S","nombre":"Plug Anal Metal Tornasolado Con Joya","marca":"Infarta","piso":0},{"sku":"FT-XC50-M","nombre":"Plug Anal Metal Tornasolado Con Joya","marca":"Infarta","piso":0},{"sku":"FT-XC50-L","nombre":"Plug Anal Metal Tornasolado Con Joya","marca":"Infarta","piso":0},{"sku":"FT-SM5-S","nombre":"Plug Anal Metalico Dorado Con Joya Corazon","marca":"Infarta","piso":0},{"sku":"FT-570302","nombre":"Plug Anal Metalico Dorado Con Joya Corazon","marca":"Infarta","piso":0},{"sku":"FT-SM5-L","nombre":"Plug Anal Metalico Dorado Con Joya Corazon","marca":"Infarta","piso":0},{"sku":"GLO07","nombre":"Juego De Cartas Verdad Desafio Retos Atrevidos","marca":"Sexitive","piso":2},{"sku":"GLO08","nombre":"Juego De Cartas Ladies Night- Retos Atrevidos","marca":"Sexitive","piso":2},{"sku":"00-602-31","nombre":"Cyber Macizo Brasilian 18X4Cm","marca":"Caiman","piso":2},{"sku":"30-302-31","nombre":"Nature Piel N1 16.5X4.5Cm","marca":"Caiman","piso":10},{"sku":"00-125-21","nombre":"Hot Finger L Piel","marca":"Caiman","piso":5},{"sku":"90-712-21","nombre":"Arnes Con Consolador 15X2.5","marca":"Caiman","piso":2},{"sku":"606-B","nombre":"Boxer de tul","marca":"salta sex shop","piso":0},{"sku":"606-N","nombre":"Boxer de tul","marca":"salta sex shop","piso":0},{"sku":"J2008-16-2","nombre":"Satisfyer Double Joy","marca":"Satisfyer","piso":1},{"sku":"FT-GLASS03","nombre":"Consolador Anal Vidrio Templado Grado Medico 10.5X3.2","marca":"Infarta","piso":1},{"sku":"2105-42","nombre":"Realistic Super Cock Vibro 19x4.5","marca":"Extasy","piso":2},{"sku":"2105-22","nombre":"Realistic Super Cock Mulato Vibe 19x4.5","marca":"Extasy","piso":2},{"sku":"FT-570362","nombre":"Plug Anal Texturado","marca":"Infarta","piso":5},{"sku":"FT-570377","nombre":"Plug Anal Texturado","marca":"Infarta","piso":3},{"sku":"FT-SM19-L","nombre":"Plug Anal Texturado","marca":"Infarta","piso":2},{"sku":"00-603-31","nombre":"Macizo Geminis Piel 17 X 3,5 Cm","marca":"Caiman","piso":2},{"sku":"FA-0706-01-1","nombre":"Mordaza Bola Negra Eco Cuero Y Tachas Negras","marca":"Infarta","piso":2},{"sku":"30-807-31","nombre":"Nature Piel N 5 - 19.5 X 5 Cm","marca":"Caiman","piso":5},{"sku":"30-808-31","nombre":"Nature Piel N2 17x4cm.","marca":"Caiman","piso":5},{"sku":"BI-210137","nombre":"Anillo vibrador Chester","marca":"Pretty Love","piso":3},{"sku":"MD002","nombre":"Disfraz Novia","marca":"Malena","piso":1},{"sku":"MD004","nombre":"Disfraz Colegiala","marca":"Malena","piso":2},{"sku":"MD011","nombre":"Disfraz secretaria","marca":"Malena","piso":2},{"sku":"LUB01","nombre":"Lubricante Personal Anal Lube Premium Relaxing 130Ml","marca":"Sexitive","piso":10},{"sku":"LUB03","nombre":"Gel Lubricante Lube Supreme Retardante 130Ml","marca":"Sexitive","piso":10},{"sku":"30-804-41","nombre":"Realistico C/Sopapa Y Testiculo","marca":"Caiman","piso":2},{"sku":"10-703-31","nombre":"Cyber-Vibe Cliterific Real�stico 20X4 Cm","marca":"Caiman","piso":2},{"sku":"10-404-21","nombre":"Doble Doc Piel","marca":"Caiman","piso":2},{"sku":"FT-570827","nombre":"Plug Anal Silicona Corazon Strass","marca":"Infarta","piso":5},{"sku":"FT-570842","nombre":"Plug Anal Silicona Corazon Strass","marca":"Infarta","piso":5},{"sku":"FT-570857","nombre":"Plug Anal Silicona Corazon Strass","marca":"Infarta","piso":5},{"sku":"GLO04","nombre":"Les Amants, Juego De Cartas + Dados","marca":"Sexitive","piso":2},{"sku":"GLO05","nombre":"Sexting box","marca":"Sexitive","piso":2},{"sku":"SA101","nombre":"Satisfyer Pro Penguin Black","marca":"Satisfyer","piso":3},{"sku":"BI-014221","nombre":"Charles 30 Funciones 17Cm X 3Cm","marca":"Pretty Love","piso":3},{"sku":"BI-014075-1","nombre":"Anillo Vibrador Sweet Ring","marca":"Baile","piso":3},{"sku":"BI-014355","nombre":"Anillo Vibrador Power Ring 10 Func.","marca":"SSM","piso":0},{"sku":"BI-026219","nombre":"Anillo Vibrador Eudora Silicona","marca":"Pretty Love","piso":3},{"sku":"30-803-31","nombre":"Nature Piel N 3 - 17 X 4.5","marca":"Caiman","piso":10},{"sku":"30-804-31","nombre":"Nature Piel N 4 - 19 X 5 Cm","marca":"Caiman","piso":10},{"sku":"30-303-31","nombre":"Nature Piel N 6 - 20 X 5.5 Cm","marca":"Caiman","piso":5},{"sku":"row-798","nombre":"Satisfyer Partner Double Whale","marca":"Satisfyer","piso":1},{"sku":"FT-570752","nombre":"Plug anal Silicona cola de conejo","marca":"Infarta","piso":2},{"sku":"ft-570722","nombre":"Plug anal Silicona cola de conejo","marca":"Infarta","piso":2},{"sku":"ft-570722","nombre":"Plug anal Silicona cola de conejo","marca":"Infarta","piso":2},{"sku":"row-803","nombre":"Boxer Hombre Vinilo 903","marca":"SEXY EDEN","piso":0},{"sku":"row-804","nombre":"Boxer Hombre Vinilo 903","marca":"SEXY EDEN","piso":0},{"sku":"BI-026212","nombre":"Funda Peneana 5","marca":"Baile","piso":5},{"sku":"BI-026207","nombre":"Funda Peneana Extiende 6 Cm","marca":"Baile","piso":5},{"sku":"FA-0607-01-1","nombre":"Collar Con Correa Negro","marca":"Infarta","piso":2},{"sku":"row-820","nombre":"Cinta Tape","marca":"SALTA SEX SHOP","piso":0},{"sku":"J80017-1","nombre":"Satisfyer Masturbador Men Classic Silver","marca":"Satisfyer","piso":0},{"sku":"J2018-57-1","nombre":"Satisfyer Love Triangle","marca":"Satisfyer","piso":1},{"sku":"d63m","nombre":"Massage Candle - Scented Candle Be - 15 Gr","marca":"Sexitive","piso":2},{"sku":"STG01","nombre":"Juego De Dados","marca":"Salta Sex Shop","piso":2},{"sku":"GLO02","nombre":"Secret Game- Juego De Dados","marca":"Sexitive","piso":2},{"sku":"suspensor 901","nombre":"Suspensor de Vinilo 901","marca":"Sexitive","piso":2},{"sku":"suspensor 901","nombre":"Suspensor de Vinilo 901","marca":"Sexitive","piso":2},{"sku":"AAA","nombre":"Pilas Duracell AAA x 2 unidades","marca":"Salta Sex Shop","piso":24},{"sku":"734","nombre":"Body Vinilo 734","marca":"SEXY EDEN","piso":1},{"sku":"FA-0513-05-1","nombre":"Latigo Luxury Fury Largo 54Cm","marca":"Salta Sex Shop","piso":0},{"sku":"FA-0218-01-01","nombre":"Latigo Labrado 80Cm - Eco-Cuero","marca":"Sexy Eden","piso":1},{"sku":"902","nombre":"Tanga Hombre Vinilo 902","marca":"SEXY EDEN","piso":2},{"sku":"row-833","nombre":"Tanga Hombre Vinilo 902","marca":"SEXY EDEN","piso":0},{"sku":"811","nombre":"Mascara Ciega Vinilo Sado 811","marca":"SEXY EDEN","piso":2},{"sku":"810","nombre":"Mascara Sado Vinilo 810","marca":"SEXY EDEN","piso":2},{"sku":"808","nombre":"Portaligas Vinilo 808","marca":"SEXY EDEN","piso":2},{"sku":"row-837","nombre":"Portaligas Vinilo 808","marca":"SEXY EDEN","piso":2},{"sku":"804","nombre":"Ligas Con Tiras Vinilo 804","marca":"SEXY EDEN","piso":2},{"sku":"row-839","nombre":"Ligas Con Tiras Vinilo 804","marca":"SEXY EDEN","piso":2},{"sku":"BI-210140","nombre":"Anillo Vibrador Trap","marca":"Pretty Love","piso":3},{"sku":"BI-014263","nombre":"Alvis 30 Funciones Silicona","marca":"Pretty Love","piso":3},{"sku":"801","nombre":"Mitones Vinilo 801","marca":"SEXY EDEN","piso":2},{"sku":"801","nombre":"Mitones Vinilo 801","marca":"SEXY EDEN","piso":2},{"sku":"row-846","nombre":"Less Abierta Vinilo 748","marca":"SEXY EDEN","piso":2},{"sku":"row-847","nombre":"Less Abierta Vinilo 748","marca":"SEXY EDEN","piso":2},{"sku":"747","nombre":"Body Sado Vinilo 747","marca":"SEXY EDEN","piso":0},{"sku":"740","nombre":"Body Vinilo Negro 740","marca":"SEXY EDEN","piso":2},{"sku":"740","nombre":"Body Vinilo Negro 740","marca":"SEXY EDEN","piso":2},{"sku":"738","nombre":"Body Tiras Vinilo Negro 738","marca":"SEXY EDEN","piso":2},{"sku":"736","nombre":"Conjunto Interior Abierto Vinilo 736","marca":"SEXY EDEN","piso":2},{"sku":"701","nombre":"Less Vinilo 701","marca":"SEXY EDEN","piso":2},{"sku":"701 R","nombre":"Less Vinilo 701","marca":"SEXY EDEN","piso":2},{"sku":"578","nombre":"Vestido Sado Tiras Vinilo Negro 578","marca":"SEXY EDEN","piso":1},{"sku":"578","nombre":"Vestido Sado Tiras Vinilo Negro 578","marca":"SEXY EDEN","piso":1},{"sku":"574","nombre":"Vestido Sado Anillos Vinilo Negro 574","marca":"SEXY EDEN","piso":1},{"sku":"559","nombre":"Vestido Cierre Vinilo 559","marca":"SEXY EDEN","piso":1},{"sku":"row-859","nombre":"Vestido Cierre Vinilo 559","marca":"SEXY EDEN","piso":1},{"sku":"548","nombre":"Vestido Transp Vinilo 548","marca":"SEXY EDEN","piso":1},{"sku":"507","nombre":"Vestido Tiras Vinilo 507","marca":"SEXY EDEN","piso":1},{"sku":"506","nombre":"Vestido Vinilo 506","marca":"SEXY EDEN","piso":1},{"sku":"309","nombre":"Calza Cola Abierta Vinilo 309","marca":"SEXY EDEN","piso":0},{"sku":"277 701","nombre":"Corset + Less Vinilo 277 701","marca":"SEXY EDEN","piso":2},{"sku":"277 701","nombre":"Corset + Less Vinilo 277 701","marca":"SEXY EDEN","piso":2},{"sku":"219 126","nombre":"Conjunto Vinilo Cierre 219126","marca":"SEXY EDEN","piso":1},{"sku":"212 741","nombre":"Bikini Vinilo Negro 212 741","marca":"SEXY EDEN","piso":2},{"sku":"207 125","nombre":"Conjunto Vinilo Negro 207 125","marca":"SEXY EDEN","piso":1},{"sku":"206 716","nombre":"Conjunto Int Vinilo 206 716","marca":"SEXY EDEN","piso":1},{"sku":"203","nombre":"Corpi�o Vinilo 203","marca":"SEXY EDEN","piso":2},{"sku":"203","nombre":"Corpi�o Vinilo 203","marca":"SEXY EDEN","piso":2},{"sku":"125","nombre":"Mini Recta Vinilo 125","marca":"SEXY EDEN","piso":0},{"sku":"902","nombre":"Miton de red (Guantes) 902","marca":"Malena","piso":2},{"sku":"row-874","nombre":"Miton de red (Guantes) 902","marca":"Malena","piso":2},{"sku":"row-875","nombre":"Miton de red (Guantes) 902","marca":"Malena","piso":2},{"sku":"802","nombre":"Body de Red 802","marca":"Malena","piso":2},{"sku":"802","nombre":"Body de Red 802","marca":"Malena","piso":2},{"sku":"802","nombre":"Body de Red 802","marca":"Malena","piso":2},{"sku":"502","nombre":"Catsweet de red 502","marca":"Malena","piso":2},{"sku":"502","nombre":"Catsweet de red 502","marca":"Malena","piso":2},{"sku":"502","nombre":"Catsweet de red 502","marca":"Malena","piso":2},{"sku":"202","nombre":"Panty medias de red 202","marca":"Malena","piso":2},{"sku":"202","nombre":"Panty medias de red 202","marca":"Malena","piso":2},{"sku":"202","nombre":"Panty medias de red 202","marca":"Malena","piso":2},{"sku":"row-885","nombre":"Trikini De Red 1022","marca":"Malena","piso":2},{"sku":"row-886","nombre":"Trikini De Red 1022","marca":"Malena","piso":2},{"sku":"1012","nombre":"Vestido de red 1012","marca":"Malena","piso":2},{"sku":"1012","nombre":"Vestido de red 1012","marca":"Malena","piso":2},{"sku":"1012","nombre":"Vestido de red 1012","marca":"Malena","piso":2},{"sku":"602","nombre":"Corset, medias y tanga de red 602","marca":"Malena","piso":2},{"sku":"602","nombre":"Corset, medias y tanga de red 602","marca":"Malena","piso":2},{"sku":"602","nombre":"Corset, medias y tanga de red 602","marca":"Malena","piso":2},{"sku":"1004","nombre":"Bandeau e hilo dental de puntilla 1004","marca":"Malena","piso":2},{"sku":"row-894","nombre":"Bandeau e hilo dental de puntilla 1004","marca":"Malena","piso":2},{"sku":"FT-SM26-S","nombre":"Plug Anal Silicona","marca":"Malena","piso":5},{"sku":"FT-SM26-M","nombre":"Plug Anal Silicona","marca":"Malena","piso":3},{"sku":"FT-SM26-L","nombre":"Plug Anal Silicona","marca":"Malena","piso":2},{"sku":"BM-009216U","nombre":"Masturbador Boca Miranda 17Cm X 8Cm","marca":"Crazy Bull","piso":3},{"sku":"90-092-21","nombre":"Arnes Doble Bananin Piel","marca":"Salta Sex Shop","piso":2},{"sku":"J2018-U127-2","nombre":"Satisfyer Love Breeze Copper","marca":"Satisfyer","piso":1},{"sku":"row-903","nombre":"Satisfyer Curvy 2+","marca":"Satisfyer","piso":1},{"sku":"row-904","nombre":"Satisfyer Curvy 2+","marca":"Satisfyer","piso":1},{"sku":"row-905","nombre":"Satisfyer Curvy 1+","marca":"Satisfyer","piso":1},{"sku":"row-906","nombre":"Satisfyer Curvy 1+","marca":"Satisfyer","piso":1},{"sku":"BI-014036-3","nombre":"Bolas Anales X3 Purple","marca":"Salta Sex Shop","piso":0},{"sku":"CW110538","nombre":"Bomba Passion Pump Manija Manometro","marca":"SSM","piso":3},{"sku":"CW110928","nombre":"Bomba Powerpump Con Manometro","marca":"SSM","piso":2},{"sku":"ft-150880","nombre":"Bomba Powerpump Piston","marca":"Infarta","piso":2},{"sku":"10-603-22","nombre":"Vibrador Vara Negra 18,5X3,5 Cm","marca":"Caiman","piso":2},{"sku":"00-600-31","nombre":"Consolador Macizo Ciber Soft 15X3,5Cm","marca":"Caiman","piso":2},{"sku":"00-602-21","nombre":"Consolador Macizo Super Vara 19X4Cm","marca":"Caiman","piso":2},{"sku":"19-001-22","nombre":"Gun Negro Con Vibrador","marca":"Caiman","piso":1},{"sku":"19-000-22","nombre":"Gun Negro Con Vibrador","marca":"Caiman","piso":1},{"sku":"10-702-39","nombre":"Vibrador Bananin Mulato 21X3,5Cm","marca":"Caiman","piso":2},{"sku":"row-924","nombre":"Gun Macizo Negro","marca":"Caiman","piso":1},{"sku":"90-000-22","nombre":"Gun Macizo Negro","marca":"Caiman","piso":1},{"sku":"90-001-22","nombre":"Gun Macizo Negro","marca":"Caiman","piso":1},{"sku":"BI-014493-2","nombre":"Bolas Kegel tighten up 3 (bolas chinas siliconadas)","marca":"Pretty Love","piso":1},{"sku":"BF116","nombre":"Palmeta Cuero Bitch","marca":"SSM","piso":0},{"sku":"BW-006061","nombre":"Vibrador Fantasy Vibe Regulable 23Cm X 4Cm","marca":"Baile","piso":0},{"sku":"BI-014466","nombre":"Emily","marca":"Pretty Love","piso":3},{"sku":"BI-210169","nombre":"Anillo vibrador Osmond","marca":"Pretty Love","piso":3},{"sku":"FT-SM4-S","nombre":"Plug Anal Steel Hart Strass","marca":"Pretty Love","piso":5},{"sku":"FT-SM4-M","nombre":"Plug Anal Steel Hart Strass","marca":"Pretty Love","piso":5},{"sku":"FT-SM4-L","nombre":"Plug Anal Steel Hart Strass","marca":"Pretty Love","piso":5},{"sku":"BM-009150H","nombre":"Masturbador Masculino Crazy Bull","marca":"Crazy Bull","piso":2},{"sku":"SA100","nombre":"Satisfyer Pro 2 Next Generation","marca":"Satisfyer","piso":3},{"sku":"BI-014191","nombre":"Boyce","marca":"Pretty Love","piso":4},{"sku":"BI-014194","nombre":"Beck","marca":"Pretty Love","piso":4},{"sku":"BI-014174","nombre":"Brighty 30 funciones","marca":"Pretty Love","piso":4},{"sku":"00-102-21","nombre":"Hot Finger Chico Piel","marca":"Caiman","piso":5},{"sku":"00-125-54","nombre":"Hot finger L rojo","marca":"Caiman","piso":5},{"sku":"90-424-54","nombre":"Arnes con dildo Monchi rosa 14x3","marca":"Caiman","piso":2},{"sku":"90-423-54","nombre":"Arnes con dildo Monchi Rosa 15x3,5 cm","marca":"Caiman","piso":2},{"sku":"90-421-22","nombre":"Arnes con dildo Monchi 16x4cm","marca":"REal Skin","piso":2},{"sku":"90-424-22","nombre":"Arnes Topgun Negro 14X3","marca":"Caiman","piso":2},{"sku":"10-403-54","nombre":"Vibrador doble penetracion Vibe joy","marca":"Caiman","piso":0},{"sku":"10-603-54","nombre":"Vibe Brazilian Geminis Roja","marca":"Caiman","piso":0},{"sku":"90-423-22","nombre":"Platinum Prostatic Negro 15X3,5 Cm","marca":"Caiman","piso":0},{"sku":"00-139-22","nombre":"Varita Anal Negra","marca":"Caiman","piso":5},{"sku":"BI-040034","nombre":"Plug Anal Silicona Special Simulation","marca":"Pretty Love","piso":0},{"sku":"BI-014362W","nombre":"Huevo Vibrador Berger","marca":"Pretty Love","piso":4},{"sku":"BW-001084","nombre":"Vibrador Ciberskin Rockin Dong 21X3 Multispeed","marca":"Baile","piso":2},{"sku":"7798158130025","nombre":"Lubricante Chupaleta","marca":"Miss V","piso":10},{"sku":"10-704-21","nombre":"Vibrador 21X4,5","marca":"Caiman","piso":1},{"sku":"10-702-31","nombre":"Vibrador mediano 21x3,5 cm","marca":"Caiman","piso":2},{"sku":"FT-SM1-S","nombre":"Plug Anal Strass","marca":"Caiman","piso":5},{"sku":"FT-SM1-M","nombre":"Plug Anal Strass","marca":"Caiman","piso":5},{"sku":"FT-SM1-L","nombre":"Plug Anal Strass","marca":"Caiman","piso":3},{"sku":"MD001","nombre":"Disfraz de Viuda Alegre","marca":"Malena","piso":1},{"sku":"ms04","nombre":"Lubricante Aliv Frio Retardante","marca":"Miss V","piso":5},{"sku":"BI-210136","nombre":"Bertram Ring","marca":"Pretty Love","piso":2},{"sku":"FA-0509-07-1","nombre":"Latigo Luxury","marca":"Infarta","piso":1},{"sku":"ft-570482","nombre":"Plug Cola De Conejo Acero","marca":"Infarta","piso":2},{"sku":"ft-570497","nombre":"Plug Cola De Conejo Acero","marca":"Infarta","piso":2},{"sku":"viagra femenino","nombre":"Ultra Mujer X 4","marca":"SSM","piso":4},{"sku":"Md-006","nombre":"Disfraz de policia","marca":"Malena","piso":1},{"sku":"10-702-22","nombre":"Vibrador Negro 18.5X3.5 Cm","marca":"Caiman","piso":1},{"sku":"10-602-54","nombre":"Vibrador mediano 19x3,5 cm","marca":"Caiman","piso":2},{"sku":"FT-200330","nombre":"Lazo erector regulable","marca":"Infarta","piso":2},{"sku":"wb-031 black","nombre":"Plug anal met�lico cola de Zorro","marca":"Sex Therapy","piso":2},{"sku":"wb-031 withe","nombre":"Plug anal met�lico cola de Zorro","marca":"Sex Therapy","piso":2},{"sku":"wb-031 grey","nombre":"Plug anal met�lico cola de Zorro","marca":"Sex Therapy","piso":2},{"sku":"ms02","nombre":"Lubricante Try Dual","marca":"Miss V","piso":5},{"sku":"00-106-54","nombre":"Inexpulsable Anal","marca":"Caiman","piso":5},{"sku":"R111","nombre":"Medias De Lycra Puntilla Siliconada","marca":"Salta Sex Shop","piso":0},{"sku":"MS19","nombre":"Lubricante Estimulante Sexcita","marca":"Miss V","piso":0},{"sku":"ms06","nombre":"Lubricante Miss V Azul Potenciador","marca":"Miss V","piso":5},{"sku":"ms09","nombre":"Lubricante Sexual Calor Miss V","marca":"Miss V","piso":5},{"sku":"MS01","nombre":"Lubricante Con L-Arginina Y Ginseng","marca":"Miss V","piso":10},{"sku":"MS05","nombre":"Lubricante Miss V Neutro","marca":"Miss V","piso":10},{"sku":"MS03","nombre":"Lubricante Miss V Sabor Chicle","marca":"Miss V","piso":10},{"sku":"00-118-58","nombre":"Plug fino para arnes jelly 3x13cm.","marca":"Caiman","piso":2}];
+  if(!localStorage.getItem(LS_PISO) && SEED_PISO.length){
+    const _p={}; const _m=Object.assign({},pisoMeta);
+    SEED_PISO.forEach(r=>{ const sku=(r.sku||"").toString().trim(); if(sku && r.piso!=null && r.piso!==""){ _p[sku]=Math.max(0,toInt(r.piso)); _m[sku]={n:r.nombre||"",m:r.marca||""}; } });
+    piso=_p; pisoMeta=_m;
+    localStorage.setItem(LS_PISO,JSON.stringify(piso));
+    localStorage.setItem(LS_PISOMETA,JSON.stringify(pisoMeta));
+  }
+
+  // restaurar config y auto-sincronizar al abrir
+  (function initCloud(){
+    $("#cloudUrl").value=localStorage.getItem(LS_CLOUD_URL)||DEFAULT_CLOUD_URL;
+    $("#cloudKey").value=localStorage.getItem(LS_CLOUD_KEY)||"";
+    $("#cloudAuto").checked=(localStorage.getItem(LS_CLOUD_AUTO)!=="0");
+    if(cloudCfg()){ setStatus("conectado. Bajando…"); cloudPull(true); }
+  })();
+
+  updateBadges();
+})();
+</script>
+</body>
+</html>
