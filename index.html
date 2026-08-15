@@ -35,7 +35,7 @@
   .statechip{font-size:12px;color:var(--muted);text-align:right;line-height:1.5}
   .statechip b{color:var(--text);font-weight:500}
 
-  nav.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:24px}
+  nav.tabs{position:sticky;top:0;z-index:50;display:flex;gap:6px;flex-wrap:wrap;margin:0 -22px 24px;padding:14px 22px;background:var(--ink);border-bottom:1px solid var(--line);box-shadow:0 8px 18px -10px rgba(0,0,0,.7)}
   nav.tabs button{background:var(--panel);border:1px solid var(--line);color:var(--muted);padding:10px 16px;border-radius:999px;font-family:'DM Sans';font-size:13.5px;font-weight:500;cursor:pointer;transition:.15s}
   nav.tabs button:hover{border-color:var(--line-2);color:var(--text)}
   nav.tabs button.active{background:var(--magenta);border-color:var(--magenta);color:#fff}
@@ -75,6 +75,7 @@
   table{width:100%;border-collapse:collapse;font-size:13.5px}
   thead th{position:sticky;top:0;background:var(--panel-2);text-align:left;padding:11px 12px;font-weight:500;color:var(--muted);border-bottom:1px solid var(--line);white-space:nowrap;z-index:2}
   #pisoTable thead th[data-sort]{cursor:pointer;user-select:none;transition:color .12s}
+  #ordenBody thead th{top:66px}
   #pisoTable thead th[data-sort]:hover{color:var(--text)}
   thead th.num{text-align:right}
   tbody td{padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:middle}
@@ -317,6 +318,7 @@
   const LS_WATPL="ss_repos_watpl_v1";
   const LS_WATPLPROV="ss_repos_watplprov_v1";
   const LS_WADATOS="ss_repos_wadatos_v1";
+  const LS_PENDING="ss_repos_piso_pending_v1";
   const DEFAULT_WA_BODY="*Pedido — {negocio}*\n{fecha}\nProveedor: {proveedor}\n\n{items}\n\nTotal: {n_articulos} artículos / {n_unidades} unidades.\n\nEntrega en: {direccion}\nCUIT: {cuit}\nHorario de recepción: {horario}\n¡Gracias!";
   const DEFAULT_WA_LINE="• [{marca}] {nombre} ({sku}) — {cantidad}";
   const LS_PISOMETA="ss_repos_pisometa_v1";
@@ -343,6 +345,8 @@
   let waTpl=load(LS_WATPL,{body:DEFAULT_WA_BODY,line:DEFAULT_WA_LINE}); // plantilla general
   let waTplProv=load(LS_WATPLPROV,{}); // proveedor -> {body}  (pisa la general)
   let waDatos=load(LS_WADATOS,{direccion:"",cuit:"",horario:""}); // datos fijos del negocio
+  let pisoPending=load(LS_PENDING,{}); // sku -> valor de piso (o "__del") aún no confirmado en la nube
+  function markPiso(sku,val){ pisoPending[sku]=(val===null?"__del":val); try{localStorage.setItem(LS_PENDING,JSON.stringify(pisoPending));}catch(e){} }
   let brandDisplay=load(LS_BRANDDISP,{});   // normBrand -> texto original de la marca
   let applyingRemote=false;      // evita reenviar a la nube lo que acabamos de bajar
 
@@ -505,7 +509,7 @@
       inp.addEventListener("change",()=>{
         const sku=inp.closest("tr").dataset.sku;
         const v=inp.value.trim();
-        if(v===""){ delete piso[sku]; } else { piso[sku]=Math.max(0,toInt(v)); }
+        if(v===""){ delete piso[sku]; markPiso(sku,null); } else { piso[sku]=Math.max(0,toInt(v)); markPiso(sku,piso[sku]); }
         save(LS_PISO,piso);
         inp.classList.toggle("set",v!=="");
         renderPiso(); updateBadges(); renderOrden();
@@ -529,7 +533,7 @@
     const v=prompt(`Fijar stock de piso = ? para los ${rows.length} artículos filtrados:`,"3");
     if(v==null)return;
     const n=Math.max(0,toInt(v));
-    rows.forEach(it=>piso[it.sku]=n);
+    rows.forEach(it=>{ piso[it.sku]=n; markPiso(it.sku,n); });
     save(LS_PISO,piso);
     renderPiso();updateBadges();renderOrden();
     toast(`Piso = ${n} aplicado a ${rows.length} artículos.`);
@@ -548,7 +552,7 @@
       const rows=parseCSV(r.result); if(rows.length<2){toast("CSV vacío.");return;}
       const H=rows[0].map(norm); const iSku=H.findIndex(h=>h.includes("sku")); const iPiso=H.findIndex(h=>h.includes("piso"));
       if(iSku<0||iPiso<0){toast("El CSV necesita columnas sku y stock_piso.");return;}
-      let n=0; rows.slice(1).forEach(r=>{ const sku=(r[iSku]||"").trim(); const v=(r[iPiso]||"").trim(); if(sku&&v!==""){piso[sku]=Math.max(0,toInt(v));n++;} });
+      let n=0; rows.slice(1).forEach(r=>{ const sku=(r[iSku]||"").trim(); const v=(r[iPiso]||"").trim(); if(sku&&v!==""){piso[sku]=Math.max(0,toInt(v));markPiso(sku,piso[sku]);n++;} });
       save(LS_PISO,piso); renderAll(); toast(`${n} pisos importados.`);
     };
     r.readAsText(f,"UTF-8"); ev.target.value="";
@@ -847,8 +851,31 @@
   function cloudCfg(){ const u=(localStorage.getItem(LS_CLOUD_URL)||DEFAULT_CLOUD_URL).trim(); const stored=localStorage.getItem(LS_CLOUD_KEY); const k=(stored!=null&&stored!=="")?stored:DEFAULT_CLOUD_KEY; return u?{url:u,clave:k}:null; }
   function setStatus(msg,cls){ const el=$("#cloudStatus"); if(!el)return; el.textContent=msg; el.style.color=(cls==="ok")?"var(--ok)":(cls==="bad")?"var(--bad)":"var(--muted)"; }
 
-  let pushT;
-  function queuePush(){ if(!cloudCfg())return; const a=$("#cloudAuto"); if(a&&!a.checked)return; clearTimeout(pushT); setStatus("cambios sin guardar…"); pushT=setTimeout(()=>cloudPush(),1500); }
+  let pushT, cloudDirty=false;
+  function queuePush(){ if(!cloudCfg())return; const a=$("#cloudAuto"); if(a&&!a.checked)return; cloudDirty=true; clearTimeout(pushT); setStatus("cambios sin guardar…"); pushT=setTimeout(()=>cloudPush(),900); }
+
+  function buildCloudPayload(){
+    const c=cloudCfg();
+    return { clave:c?c.clave:"", data:{
+      piso: Object.entries(piso).map(([sku,p])=>({ sku, nombre:(pisoMeta[sku]&&pisoMeta[sku].n)||"", marca:(pisoMeta[sku]&&pisoMeta[sku].m)||"", piso:p })),
+      prov: Object.entries(provMap).map(([k,pr])=>({ marca:(brandDisplay[k]||k), proveedor:pr })),
+      pedir: Object.entries(pedir).map(([sku,q])=>({ sku, pedir:q })),
+      config: Object.assign({ map: localStorage.getItem(LS_MAP)||"", watpl:JSON.stringify(waTpl), watplprov:JSON.stringify(waTplProv), wadatos:JSON.stringify(waDatos) }, Object.fromEntries(Object.entries(provPhone).map(([p,t])=>["tel:"+p,t])))
+    }};
+  }
+
+  // Al ocultar/cerrar la pestaña, si quedaron cambios sin subir, forzamos el envío con sendBeacon (confiable en cierre).
+  function flushBeacon(){
+    if(!cloudDirty) return;
+    const c=cloudCfg(); if(!c||!navigator.sendBeacon) return;
+    try{
+      const blob=new Blob([JSON.stringify(buildCloudPayload())],{type:"text/plain;charset=utf-8"});
+      if(navigator.sendBeacon(c.url,blob)) cloudDirty=false;
+    }catch(e){}
+  }
+  window.addEventListener("visibilitychange",()=>{ if(document.visibilityState==="hidden") flushBeacon(); });
+  window.addEventListener("pagehide",flushBeacon);
+  window.addEventListener("beforeunload",flushBeacon);
 
   async function cloudPull(silent){
     const c=cloudCfg(); if(!c){ if(!silent)toast("Configurá la URL y la clave primero."); return; }
@@ -858,9 +885,19 @@
       const j=await r.json();
       if(!j.ok) throw new Error(j.error||"error");
       applyRemote(j.data||{});
+      reconcilePending();
       setStatus("actualizado desde la nube ✓","ok");
       if(!silent)toast("Datos bajados de la nube.");
     }catch(e){ setStatus("error al bajar: "+e.message,"bad"); if(!silent)toast("No se pudo bajar de la nube. Revisá URL y clave."); }
+  }
+
+  // Reaplica los pisos editados que no se llegaron a subir, y los re-sincroniza. Garantiza que ningún cambio se pierda.
+  function reconcilePending(){
+    const keys=Object.keys(pisoPending);
+    if(!keys.length) return;
+    keys.forEach(sku=>{ const v=pisoPending[sku]; if(v==="__del") delete piso[sku]; else piso[sku]=Math.max(0,toInt(v)); });
+    save(LS_PISO,piso); // dispara el push que sincroniza y, al confirmar, limpia los pendientes
+    renderPiso(); updateBadges(); renderOrden(); renderWa();
   }
 
   function applyRemote(data){
@@ -893,16 +930,11 @@
   async function cloudPush(){
     const c=cloudCfg(); if(!c)return;
     setStatus("subiendo…");
-    const payload={ clave:c.clave, data:{
-      piso: Object.entries(piso).map(([sku,p])=>({ sku, nombre:(pisoMeta[sku]&&pisoMeta[sku].n)||"", marca:(pisoMeta[sku]&&pisoMeta[sku].m)||"", piso:p })),
-      prov: Object.entries(provMap).map(([k,pr])=>({ marca:(brandDisplay[k]||k), proveedor:pr })),
-      pedir: Object.entries(pedir).map(([sku,q])=>({ sku, pedir:q })),
-      config: Object.assign({ map: localStorage.getItem(LS_MAP)||"", watpl:JSON.stringify(waTpl), watplprov:JSON.stringify(waTplProv), wadatos:JSON.stringify(waDatos) }, Object.fromEntries(Object.entries(provPhone).map(([p,t])=>["tel:"+p,t])))
-    }};
     try{
-      const r=await fetch(c.url,{ method:"POST", headers:{"Content-Type":"text/plain;charset=utf-8"}, body:JSON.stringify(payload) });
+      const r=await fetch(c.url,{ method:"POST", headers:{"Content-Type":"text/plain;charset=utf-8"}, body:JSON.stringify(buildCloudPayload()) });
       const j=await r.json();
       if(!j.ok) throw new Error(j.error||"error");
+      cloudDirty=false; pisoPending={}; try{localStorage.setItem(LS_PENDING,"{}");}catch(e){}
       setStatus("guardado en la nube ✓","ok");
     }catch(e){ setStatus("error al subir: "+e.message,"bad"); }
   }
