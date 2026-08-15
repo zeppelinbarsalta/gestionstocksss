@@ -83,7 +83,8 @@
   table{width:100%;border-collapse:collapse;font-size:13.5px}
   thead th{position:sticky;top:0;background:var(--panel-2);text-align:left;padding:11px 12px;font-weight:500;color:var(--muted);border-bottom:1px solid var(--line);white-space:nowrap;z-index:2}
   #pisoTable thead th[data-sort]{cursor:pointer;user-select:none;transition:color .12s}
-  #ordenBody thead th{top:66px}
+  #ordenBody thead th{position:static}
+  #ordenBody .grouphead{position:sticky;top:64px;z-index:20}
   #pisoTable thead th[data-sort]:hover{color:var(--text)}
   thead th.num{text-align:right}
   tbody td{padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:middle}
