@@ -150,6 +150,7 @@
     <button data-tab="piso">2 · Stock de piso <span class="n" id="nPiso">0</span></button>
     <button data-tab="prov">3 · Proveedores <span class="n" id="nProv">0</span></button>
     <button data-tab="orden">4 · Órdenes <span class="n" id="nOrden">0</span></button>
+    <button data-tab="wa">5 · WhatsApp <span class="n" id="nWa">0</span></button>
   </nav>
 
   <!-- ============ TAB 1: CARGAR ============ -->
@@ -266,9 +267,36 @@
       <div id="ordenBody"></div>
     </div>
   </section>
+
+  <!-- ============ TAB 5: WHATSAPP ============ -->
+  <section id="tab-wa" class="hidden">
+    <div class="panel" style="margin-bottom:16px">
+      <h2 class="sec" style="font-size:18px">Plantilla del mensaje (general)</h2>
+      <p class="sub">Se usa para todos los proveedores. Variables del cuerpo: <code style="background:var(--panel-2);padding:1px 5px;border-radius:5px">{negocio}</code> <code style="background:var(--panel-2);padding:1px 5px;border-radius:5px">{proveedor}</code> <code style="background:var(--panel-2);padding:1px 5px;border-radius:5px">{fecha}</code> <code style="background:var(--panel-2);padding:1px 5px;border-radius:5px">{items}</code> <code style="background:var(--panel-2);padding:1px 5px;border-radius:5px">{n_articulos}</code> <code style="background:var(--panel-2);padding:1px 5px;border-radius:5px">{n_unidades}</code>. Cada proveedor puede tener su propia plantilla desde su tarjeta, más abajo.</p>
+      <div class="field"><label>Cuerpo del mensaje</label><textarea id="waTplBody" class="wamsg" spellcheck="false" style="min-height:190px"></textarea></div>
+      <div class="field" style="margin-top:12px"><label>Formato de cada ítem — variables: {marca} {nombre} {sku} {cantidad}</label><input type="text" id="waTplLine"><div class="waphone-hint">Si un campo viene vacío (ej. sin marca o sin SKU), se limpian solos los <code style="background:var(--panel-2);padding:0 4px;border-radius:4px">[ ]</code> y <code style="background:var(--panel-2);padding:0 4px;border-radius:4px">( )</code> que queden.</div></div>
+      <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap">
+        <button class="btn sm" id="waTplSave">Guardar plantilla</button>
+        <button class="btn ghost sm" id="waTplReset">Restablecer predeterminada</button>
+      </div>
+    </div>
+    <div class="panel">
+      <h2 class="sec">Enviar orden por WhatsApp</h2>
+      <p class="sub">Un mensaje por proveedor con lo que hay que pedir. Cargá el WhatsApp de cada proveedor (se guarda y sincroniza en la nube) y enviá directo, o copiá el texto. Podés editar el mensaje antes de mandarlo. Para pedidos largos conviene <b style="color:var(--text);font-weight:500">Copiar</b> y pegar en el chat.</p>
+      <div id="waBody"></div>
+    </div>
+  </section>
 </div>
 
 <div class="toast" id="toast"></div>
+
+<style>
+  .wacard{border:1px solid var(--line);border-top:none;border-radius:0 0 12px 12px;padding:14px;margin-bottom:16px}
+  .watel{max-width:280px}
+  .wamsg{width:100%;min-height:170px;background:var(--panel-2);border:1px solid var(--line-2);color:var(--text);border-radius:10px;padding:11px 13px;font-family:'DM Sans';font-size:13px;line-height:1.55;resize:vertical}
+  .wamsg:focus{outline:none;border-color:var(--magenta)}
+  .waphone-hint{font-size:11.5px;color:var(--muted);margin-top:5px}
+</style>
 
 <script>
 (function(){
@@ -277,6 +305,11 @@
   const LS_PROV="ss_repos_prov_v1";
   const LS_MAP="ss_repos_map_v1";
   const LS_PEDIR="ss_repos_pedir_v1";
+  const LS_PROVTEL="ss_repos_provtel_v1";
+  const LS_WATPL="ss_repos_watpl_v1";
+  const LS_WATPLPROV="ss_repos_watplprov_v1";
+  const DEFAULT_WA_BODY="*Pedido — {negocio}*\n{fecha}\nProveedor: {proveedor}\n\n{items}\n\nTotal: {n_articulos} artículos / {n_unidades} unidades.\n¡Gracias!";
+  const DEFAULT_WA_LINE="• [{marca}] {nombre} ({sku}) — {cantidad}";
   const LS_PISOMETA="ss_repos_pisometa_v1";
   const LS_BRANDDISP="ss_repos_branddisp_v1";
   const LS_CLOUD_URL="ss_repos_cloud_url";
@@ -297,13 +330,16 @@
   let provMap=load(LS_PROV,{});  // brand(norm) -> proveedor string  (display key = original brand)
   let pedir=load(LS_PEDIR,{});   // sku -> cantidad manual a pedir (override del cálculo automático)
   let pisoMeta=load(LS_PISOMETA,{}); // sku -> {n:nombre, m:marca}  (para que la hoja sea legible)
+  let provPhone=load(LS_PROVTEL,{}); // proveedor -> whatsapp
+  let waTpl=load(LS_WATPL,{body:DEFAULT_WA_BODY,line:DEFAULT_WA_LINE}); // plantilla general
+  let waTplProv=load(LS_WATPLPROV,{}); // proveedor -> {body}  (pisa la general)
   let brandDisplay=load(LS_BRANDDISP,{});   // normBrand -> texto original de la marca
   let applyingRemote=false;      // evita reenviar a la nube lo que acabamos de bajar
 
   function load(k,def){ try{const v=localStorage.getItem(k);return v?JSON.parse(v):def;}catch(e){return def;} }
   function save(k,v){
     try{localStorage.setItem(k,JSON.stringify(v));}catch(e){toast("No se pudo guardar (localStorage). Abrí el archivo guardado en tu navegador.");}
-    if(!applyingRemote && (k===LS_PISO||k===LS_PROV||k===LS_PEDIR||k===LS_MAP)) queuePush();
+    if(!applyingRemote && (k===LS_PISO||k===LS_PROV||k===LS_PEDIR||k===LS_MAP||k===LS_PROVTEL||k===LS_WATPL||k===LS_WATPLPROV)) queuePush();
   }
   let toastT;
   function toast(msg){ const t=$("#toast"); t.textContent=msg; t.classList.add("show"); clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove("show"),2600); }
@@ -656,6 +692,104 @@
   });
   $("#printOrdenBtn").addEventListener("click",()=>window.print());
 
+  $("#waTplSave").addEventListener("click",()=>{
+    waTpl={ body:$("#waTplBody").value, line:$("#waTplLine").value };
+    save(LS_WATPL,waTpl); renderWa(); toast("Plantilla guardada.");
+  });
+  $("#waTplReset").addEventListener("click",()=>{
+    waTpl={body:DEFAULT_WA_BODY,line:DEFAULT_WA_LINE};
+    save(LS_WATPL,waTpl); renderWa(); toast("Plantilla restablecida.");
+  });
+
+  /* ---------- TAB 5: WHATSAPP ---------- */
+  // grupos del pedido por proveedor, con la cantidad efectiva (>0)
+  function orderByProv(){
+    const rows=ITEMS.map(it=>({it,auto:needOf(it)}))
+      .filter(x=>x.auto!=null && x.auto>0)
+      .map(x=>({ it:x.it, qty:(pedir[x.it.sku]!=null?pedir[x.it.sku]:x.auto) }))
+      .filter(x=>x.qty>0);
+    const gm={};
+    rows.forEach(r=>{ const key=provOf(r.it); (gm[key]=gm[key]||[]).push(r); });
+    return gm;
+  }
+
+  function fillTpl(tpl,map){ let s=tpl||""; for(const k in map){ s=s.split("{"+k+"}").join(map[k]); } return s; }
+
+  function waMessage(prov,items){
+    const tplBody=(waTplProv[prov]&&waTplProv[prov].body!=null)?waTplProv[prov].body:(waTpl.body||DEFAULT_WA_BODY);
+    const tplLine=waTpl.line||DEFAULT_WA_LINE;
+    const arr=items.slice().sort((a,b)=>{ const c=norm(a.it.brand||"").localeCompare(norm(b.it.brand||"")); return c!==0?c:norm(a.it.name).localeCompare(norm(b.it.name)); });
+    const lines=arr.map(r=>{
+      let s=fillTpl(tplLine,{marca:r.it.brand||"",nombre:r.it.name||"",sku:r.it.sku||"",cantidad:r.qty});
+      s=s.split("[]").join("").split("()").join("").replace(/[ \t]{2,}/g," ").trim(); // limpia campos vacíos
+      return s;
+    });
+    const units=arr.reduce((s,r)=>s+r.qty,0);
+    return fillTpl(tplBody,{ negocio:"Salta Sex Shop", proveedor:prov, fecha:new Date().toLocaleDateString("es-AR"), items:lines.join("\n"), n_articulos:arr.length, n_unidades:units });
+  }
+
+  function renderWa(){
+    // plantilla general en los campos
+    if($("#waTplBody")){ $("#waTplBody").value=waTpl.body||DEFAULT_WA_BODY; $("#waTplLine").value=waTpl.line||DEFAULT_WA_LINE; }
+    const body=$("#waBody");
+    if(!ITEMS.length){ body.innerHTML=`<div class="empty"><b>Todavía no cargaste stock</b>Subí el CSV en la pestaña 1.</div>`; return; }
+    const gm=orderByProv();
+    const keys=Object.keys(gm).sort((a,b)=>{ const u=gm[b].reduce((s,x)=>s+x.qty,0)-gm[a].reduce((s,x)=>s+x.qty,0); return u!==0?u:a.localeCompare(b); });
+    if(!keys.length){ body.innerHTML=`<div class="empty"><b>No hay nada para pedir</b>Definí stock de piso en la pestaña 2.</div>`; return; }
+    body.innerHTML=keys.map(k=>{
+      const items=gm[k];
+      const units=items.reduce((s,x)=>s+x.qty,0);
+      const msg=waMessage(k,items);
+      const tel=provPhone[k]||"";
+      const hasOvr=!!(waTplProv[k]&&waTplProv[k].body!=null);
+      return `<div class="grouphead"><h3>${esc(k)}</h3><div class="meta"><b>${items.length}</b> art. · <b>${units}</b> u.</div></div>
+      <div class="wacard" data-k="${esc(k)}">
+        <div class="field watel"><label>WhatsApp del proveedor</label><input type="text" class="watel-input" value="${esc(tel)}" placeholder="549 387 5xxxxxx"><div class="waphone-hint">Con código de país y de área, sin el 15. Ej: 5493875xxxxxx</div></div>
+        <textarea class="wamsg" spellcheck="false" style="margin-top:12px">${esc(msg)}</textarea>
+        <div style="margin-top:10px;display:flex;gap:10px;flex-wrap:wrap">
+          <button class="btn sm wasend">Abrir WhatsApp</button>
+          <button class="btn ghost sm wacopy">Copiar mensaje</button>
+        </div>
+        <div style="margin-top:12px;border-top:1px solid var(--line);padding-top:12px">
+          <label class="chk"><input type="checkbox" class="waovr-chk" ${hasOvr?"checked":""}> Usar plantilla propia para este proveedor</label>
+          <div class="waovr" style="display:${hasOvr?"block":"none"};margin-top:8px">
+            <textarea class="waovr-body wamsg" spellcheck="false" style="min-height:150px">${esc(hasOvr?waTplProv[k].body:(waTpl.body||DEFAULT_WA_BODY))}</textarea>
+          </div>
+        </div>
+      </div>`;
+    }).join("");
+
+    body.querySelectorAll(".wacard").forEach(card=>{
+      const k=card.dataset.k;
+      const items=gm[k];
+      const telInp=card.querySelector(".watel-input");
+      const ta=card.querySelector(".wamsg");
+      const ovrChk=card.querySelector(".waovr-chk");
+      const ovrWrap=card.querySelector(".waovr");
+      const ovrBody=card.querySelector(".waovr-body");
+      const regen=()=>{ ta.value=waMessage(k,items); };
+
+      telInp.addEventListener("change",()=>{ const v=telInp.value.trim(); if(v)provPhone[k]=v; else delete provPhone[k]; save(LS_PROVTEL,provPhone); });
+      card.querySelector(".wasend").addEventListener("click",()=>{
+        const tel=(provPhone[k]||telInp.value||"").replace(/\D/g,"");
+        if(!tel){ toast("Cargá el WhatsApp del proveedor primero."); telInp.focus(); return; }
+        window.open("https://wa.me/"+tel+"?text="+encodeURIComponent(ta.value),"_blank");
+      });
+      card.querySelector(".wacopy").addEventListener("click",()=>{
+        const txt=ta.value;
+        const done=()=>toast("Mensaje copiado. Pegalo en el chat.");
+        if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(txt).then(done,()=>{ta.select();document.execCommand("copy");done();}); }
+        else { ta.select(); document.execCommand("copy"); done(); }
+      });
+      ovrChk.addEventListener("change",()=>{
+        if(ovrChk.checked){ if(!(waTplProv[k]&&waTplProv[k].body!=null)){ waTplProv[k]={body:(waTpl.body||DEFAULT_WA_BODY)}; save(LS_WATPLPROV,waTplProv); } ovrBody.value=waTplProv[k].body; ovrWrap.style.display="block"; }
+        else { delete waTplProv[k]; save(LS_WATPLPROV,waTplProv); ovrWrap.style.display="none"; }
+        regen();
+      });
+      ovrBody.addEventListener("change",()=>{ waTplProv[k]={body:ovrBody.value}; save(LS_WATPLPROV,waTplProv); regen(); });
+    });
+  }
+
   /* ---------- helpers ---------- */
   function csv(v){ v=(v==null?"":v.toString()); return /[",\n;]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v; }
   function download(name,content){
@@ -669,18 +803,20 @@
     $("#nProv").textContent=Object.keys(brandsAgg()).filter(k=>provMap[k]).length;
     const need=ITEMS.map(needOf).filter(n=>n!=null&&n>0).length;
     $("#nOrden").textContent=need;
+    $("#nWa").textContent=need?Object.keys(orderByProv()).length:0;
     $("#statechip").innerHTML = ITEMS.length
       ? `<b>${ITEMS.length}</b> artículos · <b>${need}</b> a reponer`
       : "Sin datos cargados";
   }
 
-  function renderAll(){ renderPiso(); renderProv(); renderOrden(); updateBadges(); }
+  function renderAll(){ renderPiso(); renderProv(); renderOrden(); renderWa(); updateBadges(); }
 
   /* ---------- tabs ---------- */
   function switchTab(name){
     $$("#tabs button").forEach(b=>b.classList.toggle("active",b.dataset.tab===name));
-    ["cargar","piso","prov","orden"].forEach(t=>$("#tab-"+t).classList.toggle("hidden",t!==name));
+    ["cargar","piso","prov","orden","wa"].forEach(t=>$("#tab-"+t).classList.toggle("hidden",t!==name));
     if(name==="orden")renderOrden();
+    if(name==="wa")renderWa();
   }
   $$("#tabs button").forEach(b=>b.addEventListener("click",()=>switchTab(b.dataset.tab)));
 
@@ -731,7 +867,13 @@
         pedir={}; data.pedir.forEach(r=>{ const sku=(r.sku||"").toString().trim(); if(sku&&r.pedir!==""&&r.pedir!=null) pedir[sku]=Math.max(0,toInt(r.pedir)); });
         save(LS_PEDIR,pedir);
       }
-      if(data.config&&data.config.map){ try{ const m=typeof data.config.map==="string"?JSON.parse(data.config.map):data.config.map; if(m&&m.headers) save(LS_MAP,m); }catch(e){} }
+      if(data.config){
+        if(data.config.map){ try{ const m=typeof data.config.map==="string"?JSON.parse(data.config.map):data.config.map; if(m&&m.headers) save(LS_MAP,m); }catch(e){} }
+        if(data.config.watpl){ try{ const t=JSON.parse(data.config.watpl); if(t&&(t.body!=null||t.line!=null)){ waTpl={body:t.body!=null?t.body:DEFAULT_WA_BODY,line:t.line!=null?t.line:DEFAULT_WA_LINE}; save(LS_WATPL,waTpl); } }catch(e){} }
+        if(data.config.watplprov){ try{ const tp=JSON.parse(data.config.watplprov); if(tp&&typeof tp==="object"){ waTplProv=tp; save(LS_WATPLPROV,waTplProv); } }catch(e){} }
+        const pt={}; Object.keys(data.config).forEach(kk=>{ if(kk.indexOf("tel:")===0){ const p=kk.slice(4); const v=(data.config[kk]||"").toString().trim(); if(p&&v) pt[p]=v; } });
+        if(Object.keys(pt).length){ provPhone=pt; save(LS_PROVTEL,provPhone); }
+      }
     } finally { applyingRemote=false; }
     renderAll();
   }
@@ -743,7 +885,7 @@
       piso: Object.entries(piso).map(([sku,p])=>({ sku, nombre:(pisoMeta[sku]&&pisoMeta[sku].n)||"", marca:(pisoMeta[sku]&&pisoMeta[sku].m)||"", piso:p })),
       prov: Object.entries(provMap).map(([k,pr])=>({ marca:(brandDisplay[k]||k), proveedor:pr })),
       pedir: Object.entries(pedir).map(([sku,q])=>({ sku, pedir:q })),
-      config: { map: localStorage.getItem(LS_MAP)||"" }
+      config: Object.assign({ map: localStorage.getItem(LS_MAP)||"", watpl:JSON.stringify(waTpl), watplprov:JSON.stringify(waTplProv) }, Object.fromEntries(Object.entries(provPhone).map(([p,t])=>["tel:"+p,t])))
     }};
     try{
       const r=await fetch(c.url,{ method:"POST", headers:{"Content-Type":"text/plain;charset=utf-8"}, body:JSON.stringify(payload) });
