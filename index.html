@@ -696,7 +696,8 @@
 
   /* ---------- SINCRONIZACIÓN EN LA NUBE (Google Sheets vía Apps Script) ---------- */
   const DEFAULT_CLOUD_URL="https://script.google.com/macros/s/AKfycbzymiHDYq2RuwDIkeX0suJUUnPTPmXRlTEbEYdgC1GxQlcBV8-3wB0ZR48wcoiMWQYy/exec";
-  function cloudCfg(){ const u=(localStorage.getItem(LS_CLOUD_URL)||DEFAULT_CLOUD_URL).trim(); const k=localStorage.getItem(LS_CLOUD_KEY)||""; return u?{url:u,clave:k}:null; }
+  const DEFAULT_CLOUD_KEY="ssm2026";
+  function cloudCfg(){ const u=(localStorage.getItem(LS_CLOUD_URL)||DEFAULT_CLOUD_URL).trim(); const stored=localStorage.getItem(LS_CLOUD_KEY); const k=(stored!=null&&stored!=="")?stored:DEFAULT_CLOUD_KEY; return u?{url:u,clave:k}:null; }
   function setStatus(msg,cls){ const el=$("#cloudStatus"); if(!el)return; el.textContent=msg; el.style.color=(cls==="ok")?"var(--ok)":(cls==="bad")?"var(--bad)":"var(--muted)"; }
 
   let pushT;
@@ -775,7 +776,7 @@
   // restaurar config y auto-sincronizar al abrir
   (function initCloud(){
     $("#cloudUrl").value=localStorage.getItem(LS_CLOUD_URL)||DEFAULT_CLOUD_URL;
-    $("#cloudKey").value=localStorage.getItem(LS_CLOUD_KEY)||"";
+    { const sk=localStorage.getItem(LS_CLOUD_KEY); $("#cloudKey").value=(sk!=null&&sk!=="")?sk:DEFAULT_CLOUD_KEY; }
     $("#cloudAuto").checked=(localStorage.getItem(LS_CLOUD_AUTO)!=="0");
     if(cloudCfg()){ setStatus("conectado. Bajando…"); cloudPull(true); }
   })();
