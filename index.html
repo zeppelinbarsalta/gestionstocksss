@@ -275,6 +275,14 @@
       <p class="sub">Se usa para todos los proveedores. Variables del cuerpo: <code style="background:var(--panel-2);padding:1px 5px;border-radius:5px">{negocio}</code> <code style="background:var(--panel-2);padding:1px 5px;border-radius:5px">{proveedor}</code> <code style="background:var(--panel-2);padding:1px 5px;border-radius:5px">{fecha}</code> <code style="background:var(--panel-2);padding:1px 5px;border-radius:5px">{items}</code> <code style="background:var(--panel-2);padding:1px 5px;border-radius:5px">{n_articulos}</code> <code style="background:var(--panel-2);padding:1px 5px;border-radius:5px">{n_unidades}</code>. Cada proveedor puede tener su propia plantilla desde su tarjeta, más abajo.</p>
       <div class="field"><label>Cuerpo del mensaje</label><textarea id="waTplBody" class="wamsg" spellcheck="false" style="min-height:190px"></textarea></div>
       <div class="field" style="margin-top:12px"><label>Formato de cada ítem — variables: {marca} {nombre} {sku} {cantidad}</label><input type="text" id="waTplLine"><div class="waphone-hint">Si un campo viene vacío (ej. sin marca o sin SKU), se limpian solos los <code style="background:var(--panel-2);padding:0 4px;border-radius:4px">[ ]</code> y <code style="background:var(--panel-2);padding:0 4px;border-radius:4px">( )</code> que queden.</div></div>
+      <div style="margin-top:16px;border-top:1px solid var(--line);padding-top:16px">
+        <label style="display:block;font-size:12px;color:var(--muted);margin-bottom:10px;text-transform:uppercase;letter-spacing:.6px">Datos fijos del negocio — variables: {direccion} {cuit} {horario}</label>
+        <div class="grid-map">
+          <div class="field" style="grid-column:1/-1"><label>Dirección de entrega</label><input type="text" id="waDatDir" placeholder="25 de Mayo 371, Salta Capital"></div>
+          <div class="field"><label>CUIT</label><input type="text" id="waDatCuit" placeholder="XX-XXXXXXXX-X"></div>
+          <div class="field"><label>Horario de recepción</label><input type="text" id="waDatHor" placeholder="Lun a Sáb 10 a 20 hs"></div>
+        </div>
+      </div>
       <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap">
         <button class="btn sm" id="waTplSave">Guardar plantilla</button>
         <button class="btn ghost sm" id="waTplReset">Restablecer predeterminada</button>
@@ -308,7 +316,8 @@
   const LS_PROVTEL="ss_repos_provtel_v1";
   const LS_WATPL="ss_repos_watpl_v1";
   const LS_WATPLPROV="ss_repos_watplprov_v1";
-  const DEFAULT_WA_BODY="*Pedido — {negocio}*\n{fecha}\nProveedor: {proveedor}\n\n{items}\n\nTotal: {n_articulos} artículos / {n_unidades} unidades.\n¡Gracias!";
+  const LS_WADATOS="ss_repos_wadatos_v1";
+  const DEFAULT_WA_BODY="*Pedido — {negocio}*\n{fecha}\nProveedor: {proveedor}\n\n{items}\n\nTotal: {n_articulos} artículos / {n_unidades} unidades.\n\nEntrega en: {direccion}\nCUIT: {cuit}\nHorario de recepción: {horario}\n¡Gracias!";
   const DEFAULT_WA_LINE="• [{marca}] {nombre} ({sku}) — {cantidad}";
   const LS_PISOMETA="ss_repos_pisometa_v1";
   const LS_BRANDDISP="ss_repos_branddisp_v1";
@@ -333,13 +342,14 @@
   let provPhone=load(LS_PROVTEL,{}); // proveedor -> whatsapp
   let waTpl=load(LS_WATPL,{body:DEFAULT_WA_BODY,line:DEFAULT_WA_LINE}); // plantilla general
   let waTplProv=load(LS_WATPLPROV,{}); // proveedor -> {body}  (pisa la general)
+  let waDatos=load(LS_WADATOS,{direccion:"",cuit:"",horario:""}); // datos fijos del negocio
   let brandDisplay=load(LS_BRANDDISP,{});   // normBrand -> texto original de la marca
   let applyingRemote=false;      // evita reenviar a la nube lo que acabamos de bajar
 
   function load(k,def){ try{const v=localStorage.getItem(k);return v?JSON.parse(v):def;}catch(e){return def;} }
   function save(k,v){
     try{localStorage.setItem(k,JSON.stringify(v));}catch(e){toast("No se pudo guardar (localStorage). Abrí el archivo guardado en tu navegador.");}
-    if(!applyingRemote && (k===LS_PISO||k===LS_PROV||k===LS_PEDIR||k===LS_MAP||k===LS_PROVTEL||k===LS_WATPL||k===LS_WATPLPROV)) queuePush();
+    if(!applyingRemote && (k===LS_PISO||k===LS_PROV||k===LS_PEDIR||k===LS_MAP||k===LS_PROVTEL||k===LS_WATPL||k===LS_WATPLPROV||k===LS_WADATOS)) queuePush();
   }
   let toastT;
   function toast(msg){ const t=$("#toast"); t.textContent=msg; t.classList.add("show"); clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove("show"),2600); }
@@ -694,7 +704,8 @@
 
   $("#waTplSave").addEventListener("click",()=>{
     waTpl={ body:$("#waTplBody").value, line:$("#waTplLine").value };
-    save(LS_WATPL,waTpl); renderWa(); toast("Plantilla guardada.");
+    waDatos={ direccion:$("#waDatDir").value.trim(), cuit:$("#waDatCuit").value.trim(), horario:$("#waDatHor").value.trim() };
+    save(LS_WATPL,waTpl); save(LS_WADATOS,waDatos); renderWa(); toast("Plantilla y datos guardados.");
   });
   $("#waTplReset").addEventListener("click",()=>{
     waTpl={body:DEFAULT_WA_BODY,line:DEFAULT_WA_LINE};
@@ -725,12 +736,12 @@
       return s;
     });
     const units=arr.reduce((s,r)=>s+r.qty,0);
-    return fillTpl(tplBody,{ negocio:"Salta Sex Shop", proveedor:prov, fecha:new Date().toLocaleDateString("es-AR"), items:lines.join("\n"), n_articulos:arr.length, n_unidades:units });
+    return fillTpl(tplBody,{ negocio:"Salta Sex Shop", proveedor:prov, fecha:new Date().toLocaleDateString("es-AR"), items:lines.join("\n"), n_articulos:arr.length, n_unidades:units, direccion:waDatos.direccion||"", cuit:waDatos.cuit||"", horario:waDatos.horario||"" });
   }
 
   function renderWa(){
     // plantilla general en los campos
-    if($("#waTplBody")){ $("#waTplBody").value=waTpl.body||DEFAULT_WA_BODY; $("#waTplLine").value=waTpl.line||DEFAULT_WA_LINE; }
+    if($("#waTplBody")){ $("#waTplBody").value=waTpl.body||DEFAULT_WA_BODY; $("#waTplLine").value=waTpl.line||DEFAULT_WA_LINE; $("#waDatDir").value=waDatos.direccion||""; $("#waDatCuit").value=waDatos.cuit||""; $("#waDatHor").value=waDatos.horario||""; }
     const body=$("#waBody");
     if(!ITEMS.length){ body.innerHTML=`<div class="empty"><b>Todavía no cargaste stock</b>Subí el CSV en la pestaña 1.</div>`; return; }
     const gm=orderByProv();
@@ -871,6 +882,7 @@
         if(data.config.map){ try{ const m=typeof data.config.map==="string"?JSON.parse(data.config.map):data.config.map; if(m&&m.headers) save(LS_MAP,m); }catch(e){} }
         if(data.config.watpl){ try{ const t=JSON.parse(data.config.watpl); if(t&&(t.body!=null||t.line!=null)){ waTpl={body:t.body!=null?t.body:DEFAULT_WA_BODY,line:t.line!=null?t.line:DEFAULT_WA_LINE}; save(LS_WATPL,waTpl); } }catch(e){} }
         if(data.config.watplprov){ try{ const tp=JSON.parse(data.config.watplprov); if(tp&&typeof tp==="object"){ waTplProv=tp; save(LS_WATPLPROV,waTplProv); } }catch(e){} }
+        if(data.config.wadatos){ try{ const d=JSON.parse(data.config.wadatos); if(d&&typeof d==="object"){ waDatos={direccion:d.direccion||"",cuit:d.cuit||"",horario:d.horario||""}; save(LS_WADATOS,waDatos); } }catch(e){} }
         const pt={}; Object.keys(data.config).forEach(kk=>{ if(kk.indexOf("tel:")===0){ const p=kk.slice(4); const v=(data.config[kk]||"").toString().trim(); if(p&&v) pt[p]=v; } });
         if(Object.keys(pt).length){ provPhone=pt; save(LS_PROVTEL,provPhone); }
       }
@@ -885,7 +897,7 @@
       piso: Object.entries(piso).map(([sku,p])=>({ sku, nombre:(pisoMeta[sku]&&pisoMeta[sku].n)||"", marca:(pisoMeta[sku]&&pisoMeta[sku].m)||"", piso:p })),
       prov: Object.entries(provMap).map(([k,pr])=>({ marca:(brandDisplay[k]||k), proveedor:pr })),
       pedir: Object.entries(pedir).map(([sku,q])=>({ sku, pedir:q })),
-      config: Object.assign({ map: localStorage.getItem(LS_MAP)||"", watpl:JSON.stringify(waTpl), watplprov:JSON.stringify(waTplProv) }, Object.fromEntries(Object.entries(provPhone).map(([p,t])=>["tel:"+p,t])))
+      config: Object.assign({ map: localStorage.getItem(LS_MAP)||"", watpl:JSON.stringify(waTpl), watplprov:JSON.stringify(waTplProv), wadatos:JSON.stringify(waDatos) }, Object.fromEntries(Object.entries(provPhone).map(([p,t])=>["tel:"+p,t])))
     }};
     try{
       const r=await fetch(c.url,{ method:"POST", headers:{"Content-Type":"text/plain;charset=utf-8"}, body:JSON.stringify(payload) });
