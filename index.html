@@ -602,6 +602,7 @@
         inp.classList.toggle("echo",isEcho(k));
       });
     });
+    if(UNI){ body.querySelectorAll("input.ptext").forEach(i=>{ i.readOnly=true; i.title="Se edita en zeppelin-bar.com/proveedores"; if(!i.value) i.placeholder="Sin proveedor: cargá la marca en /proveedores"; }); }
     const mapped=keys.filter(k=>provMap[k]).length;
     const review=keys.filter(k=>!provMap[k]||isEcho(k)).length;
     $("#provCount").textContent=`${keys.length} marcas · ${mapped} con proveedor · ${review} a revisar (vacío o = marca)`;
@@ -789,6 +790,7 @@
       const k=card.dataset.k;
       const items=gm[k];
       const telInp=card.querySelector(".watel-input");
+      if(UNI){ telInp.readOnly=true; telInp.title="Se edita en zeppelin-bar.com/proveedores"; }
       const ta=card.querySelector(".wamsg");
       const ovrChk=card.querySelector(".waovr-chk");
       const ovrWrap=card.querySelector(".waovr");
@@ -948,6 +950,7 @@
         if(Object.keys(pt).length){ provPhone=pt; save(LS_PROVTEL,provPhone); }
       }
     } finally { applyingRemote=false; }
+    uniPulled=true; applyUni(true);
     renderAll();
   }
 
@@ -1008,6 +1011,54 @@
   }
 
   // restaurar config y auto-sincronizar al abrir
+  /* ---------- PROVEEDORES: fuente única (zeppelin-bar.com/proveedores) ---------- */
+  // Las marcas de cada proveedor y su WhatsApp se cargan en /proveedores. Acá se usan en solo lectura.
+  var PROV_URL="https://script.google.com/macros/s/AKfycbww3YDOpbsU-YjTmxzGwZZFswKt7Odavmx4O0kP8cOBrAbYHShu8jSGsG8bhqemY89c/exec";
+  var LS_UNI="ss_repos_uniprov_v1";
+  var UNI=null; try{ UNI=JSON.parse(localStorage.getItem(LS_UNI)||"null"); }catch(e){ UNI=null; }
+  var uniEstado = UNI ? "cache" : "sin";
+  var uniPulled = false;
+  function uniBuild(list){
+    const map={}, phones={};
+    list.forEach(u=>{
+      [u.nombre].concat(u.marcas||[]).concat(u.alias||[]).forEach(m=>{ const k=norm(m); if(k && !map[k]) map[k]=u.nombre; });
+      const tel=(""+(u.whatsapp||u.telefono||"")).replace(/\D/g,""); if(tel) phones[u.nombre]=tel;
+    });
+    return {map, phones, ts:Date.now()};
+  }
+  function applyUni(push){
+    if(!UNI) return false;
+    let ch=false;
+    if(JSON.stringify(provMap)!==JSON.stringify(UNI.map)){ provMap=Object.assign({},UNI.map); ch=true; if(push) save(LS_PROV,provMap); else { try{localStorage.setItem(LS_PROV,JSON.stringify(provMap));}catch(e){} } }
+    if(JSON.stringify(provPhone)!==JSON.stringify(UNI.phones)){ provPhone=Object.assign({},UNI.phones); ch=true; if(push) save(LS_PROVTEL,provPhone); else { try{localStorage.setItem(LS_PROVTEL,JSON.stringify(provPhone));}catch(e){} } }
+    uniNote();
+    return ch;
+  }
+  function uniNote(){
+    const tbl=$("#provTable"); const panel=tbl&&tbl.closest(".panel"); if(!panel) return;
+    let n=$("#uniNote");
+    if(!n){ n=document.createElement("p"); n.id="uniNote"; n.className="sub"; n.style.cssText="border:1px solid var(--line);border-radius:8px;padding:10px 12px";
+      const sub=panel.querySelector(".sub"); if(sub) sub.style.display="none";
+      panel.insertBefore(n, panel.querySelector(".toolbar")); }
+    const est = uniEstado==="ok" ? "actualizado" : uniEstado==="sinsesion" ? "última copia · iniciá sesión en /proveedores para actualizar" : uniEstado==="error" ? "no se pudo actualizar, se usa la última copia" : "última copia guardada";
+    n.innerHTML = UNI
+      ? `Las marcas de cada proveedor y sus WhatsApp se cargan en <a href="/proveedores/" target="_blank" style="color:var(--text);font-weight:600">zeppelin-bar.com/proveedores</a> (fuente única). Acá se ven en solo lectura. <span style="color:var(--muted)">(${est})</span>`
+      : `Las marcas de cada proveedor ahora se cargan en <a href="/proveedores/" target="_blank" style="color:var(--text);font-weight:600">zeppelin-bar.com/proveedores</a>. Iniciá sesión ahí y volvé a abrir esta página para traerlas.`;
+  }
+  async function uniFetch(){
+    let ses=null; try{ ses=JSON.parse(localStorage.getItem("zpp_sesion")||"null"); }catch(e){}
+    if(!ses||!ses.token){ uniEstado = UNI ? "sinsesion" : "sin"; uniNote(); return; }
+    try{
+      const r=await fetch(PROV_URL,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({token:ses.token,action:"listar",negocio:"sexshop"})});
+      const j=await r.json();
+      if(!j||!j.ok||!Array.isArray(j.data)) throw new Error((j&&j.error)||"error");
+      UNI=uniBuild(j.data); try{ localStorage.setItem(LS_UNI,JSON.stringify(UNI)); }catch(e){}
+      uniEstado="ok";
+      applyUni(uniPulled); renderAll();
+    }catch(e){ uniEstado = (String(e&&e.message)==="sesion") ? "sinsesion" : "error"; uniNote(); }
+  }
+  if(UNI) applyUni(false);
+
   (function initCloud(){
     // limpiar cualquier URL/clave vieja guardada en este navegador (evita conflictos con deployments previos)
     try{ localStorage.removeItem(LS_CLOUD_URL); localStorage.removeItem(LS_CLOUD_KEY); }catch(e){}
@@ -1016,6 +1067,7 @@
     $("#cloudAuto").checked=(localStorage.getItem(LS_CLOUD_AUTO)!=="0");
     if(cloudCfg()){ setStatus("conectado. Bajando…"); cloudPull(true); }
   })();
+  uniNote(); uniFetch();
 
   updateBadges();
 })();
