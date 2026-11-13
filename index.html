@@ -161,6 +161,7 @@
     <button data-tab="prov">3 · Proveedores <span class="n" id="nProv">0</span></button>
     <button data-tab="orden">4 · Órdenes <span class="n" id="nOrden">0</span></button>
     <button data-tab="wa">5 · WhatsApp <span class="n" id="nWa">0</span></button>
+    <button data-tab="rot">6 · Rotación <span class="n" id="nRot">0</span></button>
     <span id="syncChip" class="syncchip" title="Estado de sincronización con la nube — clic para guardar ahora"><span class="dot"></span><span class="label">…</span></span>
   </nav>
 
@@ -200,6 +201,8 @@
           <div class="field"><label>Marca</label><select id="colBrand"></select></div>
           <div class="field"><label>Stock actual</label><select id="colStock"></select></div>
           <div class="field"><label>Proveedor (opcional)</label><select id="colProv"></select></div>
+          <div class="field"><label>Costo (para rotación)</label><select id="colCost"></select></div>
+          <div class="field"><label>Precio (para rotación)</label><select id="colPrice"></select></div>
         </div>
         <div style="margin-top:14px;display:flex;gap:16px;flex-wrap:wrap;align-items:center">
           <label class="chk"><input type="checkbox" id="ffill" checked> Rellenar Marca/Nombre vacíos con la fila de arriba (variantes)</label>
@@ -306,6 +309,113 @@
       <div id="waBody"></div>
     </div>
   </section>
+
+  <!-- ============ TAB 6: ROTACIÓN ============ -->
+  <section id="tab-rot" class="hidden">
+    <div class="panel">
+      <h2 class="sec">Rotación según ventas reales</h2>
+      <p class="sub">Subí la exportación de ventas de Tienda Nube (Ventas → Exportar lista). En el filtro poné <b style="color:var(--text);font-weight:500">Estado de la venta: Abiertas + Cerradas</b> (sin Canceladas) y un rango de los <b style="color:var(--text);font-weight:500">últimos 12 meses</b>. Las ventas quedan guardadas en este navegador; volvé a subir el archivo cuando quieras actualizar.</p>
+      <div class="drop" id="rotDrop">
+        <b>Arrastrá el CSV de ventas acá</b> o hacé clic para elegir el archivo
+        <small id="rotDropInfo">Sin ventas cargadas</small>
+      </div>
+      <input type="file" id="rotFile" accept=".csv,text/csv" class="hidden">
+      <div id="rotMapArea" class="hidden" style="margin-top:18px">
+        <div class="grid-map">
+          <div class="field"><label>N° de venta</label><select id="rcOrder"></select></div>
+          <div class="field"><label>Fecha</label><select id="rcDate"></select></div>
+          <div class="field"><label>SKU</label><select id="rcSku"></select></div>
+          <div class="field"><label>Nombre del producto</label><select id="rcName"></select></div>
+          <div class="field"><label>Cantidad</label><select id="rcQty"></select></div>
+          <div class="field"><label>Estado de la venta</label><select id="rcStatus"></select></div>
+          <div class="field"><label>Estado del pago</label><select id="rcPay"></select></div>
+          <div class="field"><label>Sucursal / depósito (opcional)</label><select id="rcBranch"></select></div>
+          <div class="field"><label>Contar sucursal</label><select id="rcBranchVal"><option value="__all">Todas</option></select></div>
+        </div>
+        <div style="margin-top:14px;display:flex;gap:16px;flex-wrap:wrap;align-items:center">
+          <label class="chk"><input type="checkbox" id="rcPaidOnly" checked> Contar solo ventas pagadas</label>
+          <button class="btn" id="rotApplyMap">Procesar ventas</button>
+          <span class="hint" id="rotMapInfo"></span>
+        </div>
+      </div>
+      <p class="hint" id="rotSummary"></p>
+    </div>
+
+    <div class="panel">
+      <h2 class="sec" style="font-size:19px">Parámetros</h2>
+      <p class="sub">Venta diaria = 60% el ritmo del último mes + 40% el de los últimos 90 días. <b style="color:var(--text);font-weight:500">Piso sugerido = venta diaria × (demora del proveedor + días de cobertura) × (1 + margen de seguridad) × temporada</b>, redondeado para arriba. Se guardan en la nube.</p>
+      <div class="grid-map">
+        <div class="field"><label>Demora proveedor (días)</label><input type="number" min="0" step="1" id="rpLead"></div>
+        <div class="field"><label>Cobertura (días)</label><input type="number" min="0" step="1" id="rpCover"></div>
+        <div class="field"><label>Margen de seguridad (%)</label><input type="number" min="0" step="5" id="rpSafety"></div>
+        <div class="field"><label>Mínimo en exhibición (u.)</label><input type="number" min="0" step="1" id="rpMin"></div>
+        <div class="field"><label>Temporada (multiplicador)</label><input type="number" min="0.1" step="0.1" id="rpSeason"></div>
+        <div class="field"><label>Alerta sin ventas (días)</label><input type="number" min="1" step="1" id="rpAlert"></div>
+        <div class="field"><label>Liquidar sin ventas (días)</label><input type="number" min="1" step="1" id="rpLiq"></div>
+        <div class="field"><label>Precio liquidación = costo ×</label><input type="number" min="1" step="0.1" id="rpLiqMult"></div>
+      </div>
+      <p class="hint">Temporada: subilo antes de picos que el promedio no anticipa (ej. <code>1.5</code> dos o tres semanas antes de San Valentín o el Día de la Mujer) y volvelo a <code>1</code> después. La demora se puede ajustar por proveedor en la tabla de abajo.</p>
+      <details style="margin-top:12px"><summary class="hint" style="cursor:pointer;display:inline">Demora por proveedor</summary>
+        <div class="tablewrap" style="max-height:280px;margin-top:10px"><table><thead><tr><th>Proveedor</th><th class="num">Artículos</th><th class="num">Demora (días)</th></tr></thead><tbody id="rpLeadBody"></tbody></table></div>
+      </details>
+    </div>
+
+    <div class="panel">
+      <h2 class="sec" style="font-size:19px">Stock de piso sugerido</h2>
+      <p class="sub">Compará el piso actual con el que surge de las ventas. Aplicá fila por fila o todos los filtrados de una; se guarda en la pestaña 2 y se sincroniza en la nube como si lo cargaras a mano.</p>
+      <div class="stats" id="rotStats"></div>
+      <div class="toolbar no-print">
+        <div class="search"><input type="text" id="rotSearch" placeholder="Buscar por nombre, SKU o marca…"></div>
+        <select id="rotFilter" style="width:auto">
+          <option value="diff">Solo con diferencia</option>
+          <option value="up">Sube el piso</option>
+          <option value="down">Baja el piso</option>
+          <option value="unset">Sin piso definido</option>
+          <option value="all">Todos</option>
+        </select>
+        <div class="spacer"></div>
+        <button class="btn sm" id="rotApplyAll">Aplicar sugeridos a filtrados</button>
+        <button class="btn ghost sm" id="rotExport">Exportar (CSV)</button>
+      </div>
+      <div class="tablewrap">
+        <table id="rotTable">
+          <thead><tr>
+            <th data-rs="name">Artículo</th><th data-rs="brand">Marca</th>
+            <th class="num" data-rs="actual">Actual</th><th class="num" data-rs="q30">Vend. 30d</th><th class="num" data-rs="q90">Vend. 90d</th><th class="num" data-rs="vm">Venta/mes</th><th class="num" data-rs="last">Últ. venta</th>
+            <th class="num" data-rs="piso">Piso</th><th class="num" data-rs="sug">Sugerido</th><th></th>
+          </tr></thead>
+          <tbody id="rotBody"></tbody>
+        </table>
+      </div>
+      <p class="hint" id="rotCount"></p>
+    </div>
+
+    <div class="panel">
+      <h2 class="sec" style="font-size:19px">Mercadería sin rotación · plata parada</h2>
+      <p class="sub">Artículos con stock y sin ventas. <span class="badge-need">Alerta</span> = sin ventas hace más de los días de alerta. <span class="neg">Liquidar</span> = sin ventas hace más de los días de liquidación. La plata parada se calcula a costo (columna Costo del CSV de stock). El precio de liquidación sugerido es costo × el multiplicador, redondeado a $100.</p>
+      <div class="stats" id="liqStats"></div>
+      <div class="toolbar no-print">
+        <div class="search"><input type="text" id="liqSearch" placeholder="Buscar…"></div>
+        <select id="liqFilter" style="width:auto">
+          <option value="all">Alerta + Liquidar</option>
+          <option value="liq">Solo Liquidar</option>
+          <option value="alert">Solo Alerta</option>
+          <option value="excl">Excluidos</option>
+        </select>
+        <div class="spacer"></div>
+        <button class="btn ghost sm" id="liqExport">Exportar liquidación (CSV)</button>
+      </div>
+      <div id="liqBrands" style="margin-bottom:14px"></div>
+      <div class="tablewrap">
+        <table>
+          <thead><tr><th>Artículo</th><th>Marca</th><th class="num">Stock</th><th class="num">Sin ventas</th><th class="num">Costo</th><th class="num">Parado a costo</th><th class="num">Precio</th><th class="num">Liquidar a</th><th class="num">Desc.</th><th></th></tr></thead>
+          <tbody id="liqBody"></tbody>
+        </table>
+      </div>
+      <p class="hint" id="liqCount"></p>
+    </div>
+  </section>
+
 </div>
 
 <div class="toast" id="toast"></div>
@@ -337,6 +447,7 @@
   const LS_CLOUD_URL="ss_repos_cloud_url";
   const LS_CLOUD_KEY="ss_repos_cloud_key";
   const LS_CLOUD_AUTO="ss_repos_cloud_auto";
+  const LS_ROTCFG="ss_repos_rotcfg_v1";
 
   const $=s=>document.querySelector(s);
   const $$=s=>Array.from(document.querySelectorAll(s));
@@ -364,7 +475,7 @@
   function load(k,def){ try{const v=localStorage.getItem(k);return v?JSON.parse(v):def;}catch(e){return def;} }
   function save(k,v){
     try{localStorage.setItem(k,JSON.stringify(v));}catch(e){toast("No se pudo guardar (localStorage). Abrí el archivo guardado en tu navegador.");}
-    if(!applyingRemote && (k===LS_PISO||k===LS_PROV||k===LS_PEDIR||k===LS_MAP||k===LS_PROVTEL||k===LS_WATPL||k===LS_WATPLPROV||k===LS_WADATOS)) queuePush();
+    if(!applyingRemote && (k===LS_PISO||k===LS_PROV||k===LS_PEDIR||k===LS_MAP||k===LS_PROVTEL||k===LS_WATPL||k===LS_WATPLPROV||k===LS_WADATOS||k===LS_ROTCFG)) queuePush();
   }
   let toastT;
   function toast(msg){ const t=$("#toast"); t.textContent=msg; t.classList.add("show"); clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove("show"),2600); }
@@ -415,10 +526,12 @@
 
   function readFile(f){
     const r=new FileReader();
-    r.onload=()=>{ try{ ingest(r.result); }catch(e){ toast("No se pudo leer el CSV."); console.error(e); } };
-    r.readAsText(f,"UTF-8");
+    r.onload=()=>{ try{ ingest(decodeBuf(r.result)); }catch(e){ toast("No se pudo leer el CSV."); console.error(e); } };
+    r.readAsArrayBuffer(f);
   }
 
+  // Tienda Nube exporta en Latin-1 (Windows-1252); si no es UTF-8 válido, se decodifica así (evita "Categor�as")
+  function decodeBuf(buf){ try{ return new TextDecoder("utf-8",{fatal:true}).decode(buf); }catch(e){ return new TextDecoder("windows-1252").decode(buf); } }
   function ingest(text){
     const rows=parseCSV(text);
     if(rows.length<2){ toast("El CSV parece vacío."); return; }
@@ -432,8 +545,8 @@
 
   function buildMapUI(){
     const opts=(sel,extra)=>{ let h=extra?'<option value="__none">— ninguna —</option>':""; HEADERS.forEach((x,i)=>h+=`<option value="${i}">${esc(x)}</option>`); sel.innerHTML=h; };
-    const S={sku:$("#colSku"),name:$("#colName"),brand:$("#colBrand"),stock:$("#colStock"),prov:$("#colProv")};
-    Object.entries(S).forEach(([k,sel])=>opts(sel,k==="prov"||k==="sku"));
+    const S={sku:$("#colSku"),name:$("#colName"),brand:$("#colBrand"),stock:$("#colStock"),prov:$("#colProv"),cost:$("#colCost"),price:$("#colPrice")};
+    Object.entries(S).forEach(([k,sel])=>opts(sel,k==="prov"||k==="sku"||k==="cost"||k==="price"));
     const saved=load(LS_MAP,null);
     const set=(sel,i)=>{ if(i>=0)sel.value=String(i); };
     if(saved && saved.headers && saved.headers.join("|")===HEADERS.join("|")){
@@ -445,13 +558,17 @@
       set(S.stock,guessCol(HEADERS,["stock","cantidad","existencia","disponible"]));
       set(S.prov,guessCol(HEADERS,["proveedor","supplier","distribuidor"]));
     }
+    if(saved && saved.headers && saved.headers.join("|")===HEADERS.join("|") && saved.cost!=null){ set(S.cost,saved.cost); set(S.price,saved.price); }
+    else { set(S.cost,guessCol(HEADERS,["costo","cost"])); const ip=HEADERS.map(norm).findIndex(h=>h==="precio"); set(S.price,ip>=0?ip:guessCol(HEADERS,["precio","price"])); }
   }
 
   $("#applyMap").addEventListener("click",()=>{
     const gv=id=>$(id).value;
-    const iSku=gv("#colSku"),iName=gv("#colName"),iBrand=gv("#colBrand"),iStock=gv("#colStock"),iProv=gv("#colProv");
+    const iSku=gv("#colSku"),iName=gv("#colName"),iBrand=gv("#colBrand"),iStock=gv("#colStock"),iProv=gv("#colProv"),iCost=gv("#colCost"),iPrice=gv("#colPrice");
     if(iStock==="__none"||iStock===""){toast("Elegí la columna de stock.");return;}
-    save(LS_MAP,{headers:HEADERS,sku:+iSku||-1,name:+iName||-1,brand:+iBrand||-1,stock:+iStock,prov:iProv==="__none"?-1:(+iProv)});
+    save(LS_MAP,{headers:HEADERS,sku:+iSku||-1,name:+iName||-1,brand:+iBrand||-1,stock:+iStock,prov:iProv==="__none"?-1:(+iProv),cost:iCost==="__none"?-1:(+iCost),price:iPrice==="__none"?-1:(+iPrice)});
+    const vIdx=HEADERS.map((h,i)=>norm(h).indexOf("valor de propiedad")===0?i:-1).filter(i=>i>=0);
+    const iPromo=HEADERS.findIndex(h=>norm(h)==="precio promocional");
     const ff=$("#ffill").checked;
     let lastBrand="",lastName="";
     ITEMS=RAW.map((o,idx)=>{
@@ -461,7 +578,9 @@
       if(ff){ if(!name)name=lastName; else lastName=name; if(!brand)brand=lastBrand; else lastBrand=brand; }
       const sku=(iSku!=="__none"?o[H[iSku]]:"")||("row-"+idx);
       const prov=iProv!=="__none"?o[H[iProv]]:"";
-      return { sku:sku.toString().trim(), name:(name||"(sin nombre)").trim(), brand:(brand||"").trim(), prov:(prov||"").trim(), actual:toInt(o[H[iStock]]) };
+      const vname=vIdx.map(i=>(o[H[i]]||"").trim()).filter(Boolean).join(", ");
+      return { sku:sku.toString().trim(), name:(name||"(sin nombre)").trim(), brand:(brand||"").trim(), prov:(prov||"").trim(), actual:toInt(o[H[iStock]]),
+        vname, cost:iCost!=="__none"?money(o[H[iCost]]):null, price:iPrice!=="__none"?money(o[H[iPrice]]):null, promo:iPromo>=0?money(o[H[iPromo]]):null };
     }).filter(x=>x.name||x.sku);
     // dedupe by sku keeping summed stock? -> keep as-is (variantes = filas distintas)
     ITEMS.forEach(it=>{ if(it.brand) brandDisplay[norm(it.brand)]=it.brand; pisoMeta[it.sku]={n:it.name,m:it.brand}; });
@@ -818,6 +937,341 @@
     });
   }
 
+  /* ---------- TAB 6: ROTACIÓN (piso dinámico + mercadería sin rotación) ---------- */
+  const LS_VENTAS="ss_repos_ventas_v1";
+  const ROT_DEF={lead:10,cover:20,seg:20,min:1,season:1,alert:90,liq:180,liqMult:1.5,leadProv:{},excl:{}};
+  let rotCfg=Object.assign({},ROT_DEF,load(LS_ROTCFG,{}));
+  if(!rotCfg.leadProv||typeof rotCfg.leadProv!=="object") rotCfg.leadProv={};
+  if(!rotCfg.excl||typeof rotCfg.excl!=="object") rotCfg.excl={};
+  let VENTAS=load(LS_VENTAS,null); // {meta:{desde,hasta,...}, lines:[[key,dia,qty]]}
+  let SALES=null; // key -> [[dia,qty]]
+  let ROT_HEADERS=[], ROT_RAW=[];
+  let rotSort={col:"vm",dir:-1};
+
+  function money(v){
+    let s=(v==null?"":v.toString()).replace(/[^\d.,\-]/g,""); if(!s) return null;
+    const lc=s.lastIndexOf(","), ld=s.lastIndexOf(".");
+    if(lc>=0&&ld>=0){ s = lc>ld ? s.replace(/\./g,"").replace(",",".") : s.replace(/,/g,""); }
+    else if(lc>=0){ s = /^-?\d{1,3}(,\d{3})+$/.test(s) ? s.replace(/,/g,"") : s.replace(",","."); }
+    else if(ld>=0 && /^-?\d{1,3}(\.\d{3})+$/.test(s)){ s=s.replace(/\./g,""); }
+    const n=parseFloat(s); return isNaN(n)?null:n;
+  }
+  const fmt$=n=>n==null?"—":"$ "+Math.round(n).toLocaleString("es-AR");
+  const r100=n=>Math.round(n/100)*100;
+  function parseDay(s){
+    s=(s||"").toString().trim(); if(!s) return null; let m;
+    if((m=s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/))) return Math.floor(Date.UTC(+m[1],+m[2]-1,+m[3])/864e5);
+    if((m=s.match(/(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2,4})/))){ let y=+m[3]; if(y<100) y+=2000; return Math.floor(Date.UTC(y,+m[2]-1,+m[1])/864e5); }
+    return null;
+  }
+  const dayStr=d=>new Date(d*864e5).toLocaleDateString("es-AR",{timeZone:"UTC"});
+
+  function buildSales(){
+    SALES=null; if(!VENTAS||!Array.isArray(VENTAS.lines)) return;
+    SALES={}; VENTAS.lines.forEach(([k,d,q])=>{ (SALES[k]=SALES[k]||[]).push([d,q]); });
+  }
+  buildSales();
+
+  // claves de venta de un artículo: SKU + nombre con variante (ventas sin SKU)
+  let NAMECOUNT={};
+  function itemKeys(it){
+    const ks=new Set();
+    if(it.sku && it.sku.indexOf("row-")!==0) ks.add(it.sku);
+    const full=norm(it.name+(it.vname?" ("+it.vname+")":""));
+    ks.add("n:"+full);
+    if(!it.vname || NAMECOUNT[norm(it.name)]===1) ks.add("n:"+norm(it.name));
+    return [...ks];
+  }
+  function statsOf(it){
+    const m=VENTAS.meta, H=m.hasta, span=m.hasta-m.desde+1;
+    let q30=0,q90=0,q180=0,qAll=0,last=null;
+    itemKeys(it).forEach(k=>{ (SALES[k]||[]).forEach(([d,q])=>{ const a=H-d; if(a<30)q30+=q; if(a<90)q90+=q; if(a<180)q180+=q; qAll+=q; if(last==null||d>last) last=d; }); });
+    const d30=Math.min(30,span), d90=Math.min(90,span);
+    const v=0.6*(q30/d30)+0.4*(q90/d90);
+    const since = last==null ? null : H-last;
+    let st;
+    if(since==null) st = span>=rotCfg.liq ? "liq" : span>=rotCfg.alert ? "alert" : "nodata";
+    else st = since>=rotCfg.liq ? "liq" : since>=rotCfg.alert ? "alert" : "ok";
+    const prov=provOf(it);
+    const lead = rotCfg.leadProv[prov]!=null ? +rotCfg.leadProv[prov] : +rotCfg.lead;
+    const raw = v*(lead+(+rotCfg.cover))*(1+(+rotCfg.seg)/100)*(+rotCfg.season||1);
+    const sug = st==="liq" ? 0 : Math.max(Math.ceil(raw-1e-9), +rotCfg.min||0);
+    return {q30,q90,q180,qAll,last,since,v,vm:v*30,st,sug,prov,lead};
+  }
+
+  /* --- carga del CSV de ventas --- */
+  const rotDrop=$("#rotDrop"), rotFile=$("#rotFile");
+  rotDrop.addEventListener("click",()=>rotFile.click());
+  ["dragover","dragenter"].forEach(e=>rotDrop.addEventListener(e,ev=>{ev.preventDefault();rotDrop.classList.add("drag");}));
+  ["dragleave","drop"].forEach(e=>rotDrop.addEventListener(e,ev=>{ev.preventDefault();rotDrop.classList.remove("drag");}));
+  rotDrop.addEventListener("drop",ev=>{ const f=ev.dataTransfer.files[0]; if(f)rotRead(f); });
+  rotFile.addEventListener("change",ev=>{ const f=ev.target.files[0]; if(f)rotRead(f); ev.target.value=""; });
+  function rotRead(f){
+    const r=new FileReader();
+    r.onload=()=>{ try{ rotIngest(decodeBuf(r.result), f.name); }catch(e){ toast("No se pudo leer el CSV de ventas."); console.error(e); } };
+    r.readAsArrayBuffer(f);
+  }
+  let rotFileName="";
+  function rotIngest(text,name){
+    const rows=parseCSV(text);
+    if(rows.length<2){ toast("El CSV de ventas parece vacío."); return; }
+    rotFileName=name||"";
+    ROT_HEADERS=rows[0].map(h=>h.trim());
+    ROT_RAW=rows.slice(1);
+    const S={rcOrder:["numero de orden","numero de venta","orden","order"],rcDate:["fecha","date"],rcSku:["sku","codigo"],rcName:["nombre del producto","producto","product"],rcQty:["cantidad del producto","cantidad","quantity"],rcStatus:["estado de la orden","estado de la venta","estado"],rcPay:["estado del pago","pago"],rcBranch:["sucursal de venta","sucursal","deposito","ubicacion"]};
+    const optional={rcOrder:1,rcSku:1,rcName:1,rcStatus:1,rcPay:1,rcBranch:1};
+    Object.entries(S).forEach(([id,c])=>{
+      const sel=$("#"+id); let h=optional[id]?'<option value="-1">— ninguna —</option>':"";
+      ROT_HEADERS.forEach((x,i)=>h+=`<option value="${i}">${esc(x)}</option>`); sel.innerHTML=h;
+      const g=guessCol(ROT_HEADERS,c); if(g>=0) sel.value=String(g);
+    });
+    // "Fecha" exacta (no "Fecha de pago")
+    const iF=ROT_HEADERS.findIndex(h=>norm(h)==="fecha"); if(iF>=0) $("#rcDate").value=String(iF);
+    rotBranchVals();
+    $("#rotMapArea").classList.remove("hidden");
+    $("#rotMapInfo").textContent=ROT_RAW.length+" filas · "+ROT_HEADERS.length+" columnas";
+  }
+  function rotBranchVals(){
+    const i=+$("#rcBranch").value, sel=$("#rcBranchVal");
+    let h='<option value="__all">Todas</option>';
+    if(i>=0){ const vals=[...new Set(ROT_RAW.map(r=>(r[i]||"").trim()).filter(Boolean))].sort(); vals.forEach(v=>h+=`<option value="${esc(v)}">${esc(v)}</option>`); }
+    sel.innerHTML=h; sel.disabled=i<0;
+  }
+  $("#rcBranch").addEventListener("change",rotBranchVals);
+
+  $("#rotApplyMap").addEventListener("click",()=>{
+    const gi=id=>+$("#"+id).value;
+    const iO=gi("rcOrder"),iD=gi("rcDate"),iS=gi("rcSku"),iN=gi("rcName"),iQ=gi("rcQty"),iSt=gi("rcStatus"),iP=gi("rcPay"),iB=gi("rcBranch");
+    const bVal=$("#rcBranchVal").value, paidOnly=$("#rcPaidOnly").checked;
+    if(iD<0||iQ<0){ toast("Elegí las columnas de fecha y cantidad."); return; }
+    if(iS<0&&iN<0){ toast("Elegí SKU o nombre del producto."); return; }
+    const cell=(r,i)=>i>=0?((r[i]||"").trim()):"";
+    const ord={}; let lastCtx=null;
+    const agg={}; const orders=new Set(); const payVals={};
+    let nCancel=0,nUnpaid=0,nBranch=0,nLines=0,units=0,desde=null,hasta=null;
+    ROT_RAW.forEach(r=>{
+      const on=cell(r,iO), dStr=cell(r,iD);
+      let ctx;
+      if(dStr){ ctx={day:parseDay(dStr),st:cell(r,iSt),pay:cell(r,iP),br:cell(r,iB)}; if(on) ord[on]=ctx; lastCtx=ctx; }
+      else ctx=(on&&ord[on])||lastCtx;
+      if(!ctx||ctx.day==null) return;
+      const q=toInt(cell(r,iQ)); if(q<=0) return;
+      if(/cancel/.test(norm(ctx.st))){ nCancel++; return; }
+      if(iP>=0){ const pv=ctx.pay||"(vacío)"; payVals[pv]=(payVals[pv]||0)+1; if(paidOnly && !/recibid|pagad|paid|aprobad|acreditad|autorizad/.test(norm(ctx.pay))){ nUnpaid++; return; } }
+      if(iB>=0 && bVal!=="__all" && ctx.br!==bVal){ nBranch++; return; }
+      const sku=cell(r,iS), nm=cell(r,iN);
+      const key = sku ? sku : (nm ? "n:"+norm(nm) : null); if(!key) return;
+      const ak=key+"\u0001"+ctx.day; agg[ak]=(agg[ak]||0)+q;
+      nLines++; units+=q; if(on) orders.add(on);
+      if(desde==null||ctx.day<desde) desde=ctx.day; if(hasta==null||ctx.day>hasta) hasta=ctx.day;
+    });
+    if(!nLines){ toast("No quedó ninguna venta válida. Revisá el mapeo."); return; }
+    const lines=Object.entries(agg).map(([k,q])=>{ const p=k.split("\u0001"); return [p[0],+p[1],q]; });
+    VENTAS={ meta:{desde,hasta,ordenes:orders.size,lineas:nLines,unidades:units,cancel:nCancel,impagas:nUnpaid,otraSucursal:nBranch,archivo:rotFileName,cargado:Date.now(),pagos:payVals}, lines };
+    try{ localStorage.setItem(LS_VENTAS,JSON.stringify(VENTAS)); }catch(e){ toast("No entró en el almacenamiento del navegador."); }
+    buildSales();
+    $("#rotMapArea").classList.add("hidden");
+    renderRot(); updateBadges();
+    toast(`${orders.size||nLines} ventas procesadas.`);
+  });
+
+  /* --- parámetros --- */
+  const RP={rpLead:"lead",rpCover:"cover",rpSafety:"seg",rpMin:"min",rpSeason:"season",rpAlert:"alert",rpLiq:"liq",rpLiqMult:"liqMult"};
+  function rotParamsUI(){ Object.entries(RP).forEach(([id,k])=>{ const el=$("#"+id); if(el && document.activeElement!==el) el.value=rotCfg[k]; }); }
+  Object.entries(RP).forEach(([id,k])=>{
+    $("#"+id).addEventListener("change",ev=>{
+      const n=parseFloat(String(ev.target.value).replace(",","."));
+      rotCfg[k] = isNaN(n)||n<0 ? ROT_DEF[k] : n;
+      save(LS_ROTCFG,rotCfg); renderRot(); updateBadges();
+    });
+  });
+  function renderLeadProv(){
+    const body=$("#rpLeadBody"); if(!body) return;
+    const cnt={}; ITEMS.forEach(it=>{ const p=provOf(it); cnt[p]=(cnt[p]||0)+1; });
+    const keys=Object.keys(cnt).sort((a,b)=>cnt[b]-cnt[a]);
+    body.innerHTML = keys.map(p=>`<tr data-p="${esc(p)}"><td>${esc(p)}</td><td class="num">${cnt[p]}</td><td class="num"><input class="cellinput ${rotCfg.leadProv[p]!=null?'set':''}" type="number" min="0" step="1" value="${rotCfg.leadProv[p]!=null?rotCfg.leadProv[p]:""}" placeholder="${rotCfg.lead}"></td></tr>`).join("")
+      || `<tr><td colspan="3" class="empty">Cargá el stock para ver los proveedores.</td></tr>`;
+    body.querySelectorAll("input").forEach(inp=>inp.addEventListener("change",()=>{
+      const p=inp.closest("tr").dataset.p, v=inp.value.trim();
+      if(v==="") delete rotCfg.leadProv[p]; else rotCfg.leadProv[p]=Math.max(0,toInt(v));
+      save(LS_ROTCFG,rotCfg); inp.classList.toggle("set",v!==""); renderRot();
+    }));
+  }
+
+  /* --- render --- */
+  let ROT_ROWS=[], LIQ_ROWS=[];
+  function rotCompute(){
+    NAMECOUNT={}; ITEMS.forEach(it=>{ const k=norm(it.name); NAMECOUNT[k]=(NAMECOUNT[k]||0)+1; });
+    ROT_ROWS = ITEMS.map(it=>Object.assign({it},statsOf(it)));
+  }
+  function renderRot(){
+    rotParamsUI();
+    const m=VENTAS&&VENTAS.meta;
+    $("#rotDropInfo").textContent = m ? `Cargado: ${m.archivo||"ventas"} · ${dayStr(m.desde)} al ${dayStr(m.hasta)} · ${m.ordenes} ventas · ${m.unidades} unidades` : "Sin ventas cargadas";
+    const body=$("#rotBody"), lbody=$("#liqBody");
+    if(!m || !SALES){ ROT_ROWS=[]; LIQ_ROWS=[]; $("#rotSummary").textContent=""; $("#rotStats").innerHTML=""; $("#liqStats").innerHTML=""; $("#liqBrands").innerHTML="";
+      body.innerHTML=`<tr><td colspan="10" class="empty"><b>Falta el CSV de ventas</b>Subilo arriba.</td></tr>`; lbody.innerHTML=`<tr><td colspan="10" class="empty">—</td></tr>`; $("#rotCount").textContent=""; $("#liqCount").textContent=""; renderLeadProv(); return; }
+    if(!ITEMS.length){ ROT_ROWS=[]; LIQ_ROWS=[]; $("#rotStats").innerHTML=""; $("#liqStats").innerHTML=""; $("#liqBrands").innerHTML="";
+      body.innerHTML=`<tr><td colspan="10" class="empty"><b>Falta el stock</b>Subí el CSV de stock en la pestaña 1 (en cada sesión).</td></tr>`; lbody.innerHTML=`<tr><td colspan="10" class="empty">—</td></tr>`; $("#rotCount").textContent=""; $("#liqCount").textContent=""; }
+    else rotCompute();
+    renderLeadProv();
+
+    // resumen de cruce ventas ↔ stock
+    const span=m.hasta-m.desde+1;
+    let sum=`Período ${span} días. Excluidas: ${m.cancel} líneas canceladas, ${m.impagas} sin pago acreditado${m.otraSucursal?`, ${m.otraSucursal} de otra sucursal`:""}.`;
+    if(ITEMS.length){
+      const claimed=new Set(); ROT_ROWS.forEach(r=>itemKeys(r.it).forEach(k=>claimed.add(k)));
+      let uM=0,uT=0; Object.entries(SALES).forEach(([k,arr])=>{ const u=arr.reduce((s,x)=>s+x[1],0); uT+=u; if(claimed.has(k)) uM+=u; });
+      sum+=` Cruce con el stock: ${uT?Math.round(uM/uT*100):0}% de las unidades vendidas encontraron su artículo (el resto son productos borrados o sin SKU).`;
+    }
+    if(span<rotCfg.liq) sum+=` ⚠ El archivo cubre menos de ${rotCfg.liq} días: lo que nunca se vendió queda en "Alerta" y no en "Liquidar". Exportá 12 meses.`;
+    $("#rotSummary").textContent=sum;
+    if(!ITEMS.length){ updateBadges(); return; }
+
+    /* tabla de piso sugerido */
+    const q=norm($("#rotSearch").value), f=$("#rotFilter").value;
+    let rows=ROT_ROWS.filter(r=>{
+      const p=piso[r.it.sku];
+      if(f==="diff" && p===r.sug) return false;
+      if(f==="up" && !(p==null?r.sug>0:r.sug>p)) return false;
+      if(f==="down" && !(p!=null && r.sug<p)) return false;
+      if(f==="unset" && p!=null) return false;
+      if(!q) return true;
+      return norm(r.it.name).includes(q)||norm(r.it.sku).includes(q)||norm(r.it.brand).includes(q);
+    });
+    const keyf=r=>{ switch(rotSort.col){
+      case "name":return norm(r.it.name); case "brand":return norm(r.it.brand); case "actual":return r.it.actual;
+      case "q30":return r.q30; case "q90":return r.q90; case "vm":return r.vm; case "last":return r.last==null?-Infinity:r.last;
+      case "piso":return piso[r.it.sku]==null?-Infinity:piso[r.it.sku]; case "sug":return r.sug; } return 0; };
+    rows.sort((a,b)=>{ const x=keyf(a),y=keyf(b); return x<y?-rotSort.dir:x>y?rotSort.dir:0; });
+    $$("#rotTable thead th[data-rs]").forEach(th=>{ const base=th.dataset.label||(th.dataset.label=th.textContent); th.textContent=base+(rotSort.col===th.dataset.rs?(rotSort.dir>0?" ↑":" ↓"):""); });
+    const stTag={liq:'<span class="neg" title="Sin ventas: liquidar">liquidar</span>',alert:'<span class="badge-need" title="Sin ventas hace tiempo">alerta</span>',nodata:'<span class="badge-ok">sin datos</span>',ok:""};
+    const SHOW=600;
+    body.innerHTML = rows.slice(0,SHOW).map(r=>{
+      const it=r.it, p=piso[it.sku], diff=p!==r.sug;
+      const sugCls = p==null ? "badge-need" : r.sug>p ? "badge-need" : r.sug<p ? "neg" : "badge-ok";
+      return `<tr data-sku="${esc(it.sku)}">
+        <td class="name"><b>${esc(it.name)}${it.vname?` <span style="color:var(--muted);font-weight:300">(${esc(it.vname)})</span>`:""}</b><small>${esc(it.sku)} ${stTag[r.st]||""}</small></td>
+        <td>${it.brand?`<span class="pill">${esc(it.brand)}</span>`:'<span class="badge-ok">—</span>'}</td>
+        <td class="num">${it.actual<0?`<span class="neg">${it.actual}</span>`:it.actual}</td>
+        <td class="num">${r.q30||'<span class="badge-ok">0</span>'}</td>
+        <td class="num">${r.q90||'<span class="badge-ok">0</span>'}</td>
+        <td class="num">${r.vm?r.vm.toFixed(1):'<span class="badge-ok">0</span>'}</td>
+        <td class="num" title="${r.last!=null?dayStr(r.last):""}">${r.since==null?'<span class="badge-ok">nunca</span>':(r.since===0?"hoy":r.since+" d")}</td>
+        <td class="num">${p==null?'<span class="badge-ok">—</span>':p}</td>
+        <td class="num"><b class="${sugCls}" style="font-weight:600">${r.sug}</b></td>
+        <td class="num">${diff?'<button class="btn ghost sm rotap">Aplicar</button>':'<span class="badge-ok">ok</span>'}</td>
+      </tr>`;
+    }).join("") || `<tr><td colspan="10" class="empty">Sin resultados.</td></tr>`;
+    body.querySelectorAll(".rotap").forEach(b=>b.addEventListener("click",()=>{
+      const sku=b.closest("tr").dataset.sku; const r=ROT_ROWS.find(x=>x.it.sku===sku); if(!r) return;
+      piso[sku]=r.sug; markPiso(sku,r.sug); save(LS_PISO,piso);
+      renderPiso(); renderOrden(); renderRot(); updateBadges(); toast(`Piso ${r.sug} aplicado.`);
+    }));
+    const up=ROT_ROWS.filter(r=>piso[r.it.sku]!=null&&r.sug>piso[r.it.sku]).length;
+    const down=ROT_ROWS.filter(r=>piso[r.it.sku]!=null&&r.sug<piso[r.it.sku]).length;
+    const unset=ROT_ROWS.filter(r=>piso[r.it.sku]==null).length;
+    const sell=ROT_ROWS.filter(r=>r.q90>0).length;
+    $("#rotStats").innerHTML=`
+      <div class="stat"><div class="k">Venden (90 d)</div><div class="v mag">${sell}</div></div>
+      <div class="stat"><div class="k">Sube el piso</div><div class="v">${up}</div></div>
+      <div class="stat"><div class="k">Baja el piso</div><div class="v">${down}</div></div>
+      <div class="stat"><div class="k">Sin piso</div><div class="v">${unset}</div></div>`;
+    $("#rotCount").textContent=`${rows.length} mostrados${rows.length>SHOW?` (se listan los primeros ${SHOW}; filtrá o buscá para ver el resto)`:""} · ventas al ${dayStr(m.hasta)}`;
+    renderLiq();
+  }
+
+  function liqPrice(it){ if(it.cost==null||!(it.cost>0)) return null; return r100(it.cost*(+rotCfg.liqMult||1.5)); }
+  function curPrice(it){ return (it.promo!=null&&it.promo>0)?it.promo:it.price; }
+  function renderLiq(){
+    const f=$("#liqFilter").value, q=norm($("#liqSearch").value);
+    const base=ROT_ROWS.filter(r=>r.it.actual>0 && (r.st==="alert"||r.st==="liq"));
+    LIQ_ROWS=base.filter(r=>{
+      const ex=!!rotCfg.excl[r.it.sku];
+      if(f==="excl") return ex; if(ex) return false;
+      if(f==="liq"&&r.st!=="liq") return false; if(f==="alert"&&r.st!=="alert") return false;
+      if(!q) return true; return norm(r.it.name).includes(q)||norm(r.it.sku).includes(q)||norm(r.it.brand).includes(q);
+    }).sort((a,b)=>((b.it.cost||0)*b.it.actual)-((a.it.cost||0)*a.it.actual));
+    const act=base.filter(r=>!rotCfg.excl[r.it.sku]);
+    const tot=(arr)=>arr.reduce((s,r)=>s+(r.it.cost>0?r.it.cost*r.it.actual:0),0);
+    const liq=act.filter(r=>r.st==="liq"), al=act.filter(r=>r.st==="alert");
+    const noCost=act.filter(r=>!(r.it.cost>0)).length;
+    $("#liqStats").innerHTML=`
+      <div class="stat"><div class="k">Plata parada (total)</div><div class="v mag">${fmt$(tot(act))}</div></div>
+      <div class="stat"><div class="k">Liquidar · ${liq.length} art.</div><div class="v">${fmt$(tot(liq))}</div></div>
+      <div class="stat"><div class="k">Alerta · ${al.length} art.</div><div class="v">${fmt$(tot(al))}</div></div>
+      <div class="stat"><div class="k">Unidades paradas</div><div class="v">${act.reduce((s,r)=>s+r.it.actual,0)}</div></div>`;
+    const byB={}; act.forEach(r=>{ const b=r.it.brand||"(sin marca)"; byB[b]=byB[b]||{v:0,n:0}; byB[b].v+=r.it.cost>0?r.it.cost*r.it.actual:0; byB[b].n++; });
+    const bk=Object.keys(byB).sort((a,b)=>byB[b].v-byB[a].v);
+    $("#liqBrands").innerHTML = bk.length ? `<div style="display:flex;flex-wrap:wrap;gap:8px">${bk.map(b=>`<span class="pill" style="padding:5px 10px;cursor:pointer" data-b="${esc(b)}" title="Filtrar por esta marca">${esc(b)} · <b style="color:var(--text);font-weight:500">${fmt$(byB[b].v)}</b> · ${byB[b].n}</span>`).join("")}</div>` : "";
+    $$("#liqBrands .pill").forEach(p=>p.addEventListener("click",()=>{ $("#liqSearch").value=p.dataset.b; renderLiq(); }));
+    $("#liqBody").innerHTML = LIQ_ROWS.map(r=>{
+      const it=r.it, lp=liqPrice(it), cp=curPrice(it);
+      const disc = (lp!=null&&cp>0&&lp<cp) ? Math.round((1-lp/cp)*100)+"%" : (lp!=null&&cp>0?'<span class="badge-ok">ya abajo</span>':"—");
+      const tag = r.st==="liq"?'<span class="neg">liquidar</span>':'<span class="badge-need">alerta</span>';
+      return `<tr data-sku="${esc(it.sku)}">
+        <td class="name"><b>${esc(it.name)}${it.vname?` <span style="color:var(--muted);font-weight:300">(${esc(it.vname)})</span>`:""}</b><small>${esc(it.sku)} · ${tag}</small></td>
+        <td>${esc(it.brand||"—")}</td>
+        <td class="num">${it.actual}</td>
+        <td class="num">${r.since==null?"nunca":r.since+" d"}</td>
+        <td class="num">${it.cost>0?fmt$(it.cost):'<span class="badge-ok">—</span>'}</td>
+        <td class="num"><b style="font-weight:500">${it.cost>0?fmt$(it.cost*it.actual):"—"}</b></td>
+        <td class="num">${cp>0?fmt$(cp):"—"}</td>
+        <td class="num" style="color:var(--magenta-soft);font-weight:500">${lp!=null?fmt$(lp):"—"}</td>
+        <td class="num">${disc}</td>
+        <td class="num"><button class="btn ghost sm liqex">${rotCfg.excl[it.sku]?"Incluir":"Excluir"}</button></td>
+      </tr>`;
+    }).join("") || `<tr><td colspan="10" class="empty">Nada para mostrar.</td></tr>`;
+    $$("#liqBody .liqex").forEach(b=>b.addEventListener("click",()=>{
+      const sku=b.closest("tr").dataset.sku;
+      if(rotCfg.excl[sku]) delete rotCfg.excl[sku]; else rotCfg.excl[sku]=1;
+      save(LS_ROTCFG,rotCfg); renderLiq(); updateBadges();
+    }));
+    $("#liqCount").textContent=`${LIQ_ROWS.length} artículos${noCost?` · ${noCost} sin costo cargado en Tienda Nube (no suman a la plata parada)`:""} · "Excluir" sirve para productos nuevos o que no querés liquidar.`;
+  }
+  function rotBadge(){
+    if(!VENTAS||!SALES||!ITEMS.length) return 0;
+    if(!ROT_ROWS.length) rotCompute();
+    return ROT_ROWS.filter(r=>r.it.actual>0&&r.st==="liq"&&!rotCfg.excl[r.it.sku]).length;
+  }
+
+  $("#rotSearch").addEventListener("input",renderRot);
+  $("#rotFilter").addEventListener("change",renderRot);
+  $("#liqSearch").addEventListener("input",renderLiq);
+  $("#liqFilter").addEventListener("change",renderLiq);
+  $$("#rotTable thead th[data-rs]").forEach(th=>th.addEventListener("click",()=>{
+    const c=th.dataset.rs; if(rotSort.col===c) rotSort.dir=-rotSort.dir; else { rotSort.col=c; rotSort.dir=(c==="name"||c==="brand")?1:-1; }
+    renderRot();
+  }));
+  $("#rotApplyAll").addEventListener("click",()=>{
+    const q=norm($("#rotSearch").value), f=$("#rotFilter").value;
+    const rows=ROT_ROWS.filter(r=>{
+      const p=piso[r.it.sku]; if(p===r.sug) return false;
+      if(f==="up" && !(p==null?r.sug>0:r.sug>p)) return false;
+      if(f==="down" && !(p!=null && r.sug<p)) return false;
+      if(f==="unset" && p!=null) return false;
+      if(!q) return true; return norm(r.it.name).includes(q)||norm(r.it.sku).includes(q)||norm(r.it.brand).includes(q);
+    });
+    if(!rows.length){ toast("No hay cambios para aplicar."); return; }
+    if(!confirm(`¿Aplicar el piso sugerido a ${rows.length} artículos? Reemplaza el piso actual de esos artículos (se puede volver a editar en la pestaña 2).`)) return;
+    rows.forEach(r=>{ piso[r.it.sku]=r.sug; markPiso(r.it.sku,r.sug); });
+    save(LS_PISO,piso);
+    renderPiso(); renderOrden(); renderRot(); updateBadges();
+    toast(`Piso aplicado a ${rows.length} artículos.`);
+  });
+  $("#rotExport").addEventListener("click",()=>{
+    if(!ROT_ROWS.length){ toast("Nada para exportar."); return; }
+    const L=["sku,nombre,variante,marca,proveedor,stock_actual,vendidas_30d,vendidas_90d,venta_mes,ultima_venta,piso_actual,piso_sugerido,estado"];
+    ROT_ROWS.forEach(r=>L.push([csv(r.it.sku),csv(r.it.name),csv(r.it.vname||""),csv(r.it.brand),csv(r.prov),r.it.actual,r.q30,r.q90,r.vm.toFixed(2),r.last!=null?dayStr(r.last):"",piso[r.it.sku]!=null?piso[r.it.sku]:"",r.sug,r.st].join(",")));
+    download("piso_sugerido.csv",L.join("\n"));
+  });
+  $("#liqExport").addEventListener("click",()=>{
+    if(!LIQ_ROWS.length){ toast("Nada para exportar."); return; }
+    const L=["sku,nombre,variante,marca,stock,dias_sin_venta,costo,parado_a_costo,precio_actual,precio_liquidacion,descuento,estado"];
+    LIQ_ROWS.forEach(r=>{ const it=r.it, lp=liqPrice(it), cp=curPrice(it); L.push([csv(it.sku),csv(it.name),csv(it.vname||""),csv(it.brand),it.actual,r.since==null?"nunca":r.since,it.cost||"",it.cost>0?Math.round(it.cost*it.actual):"",cp||"",lp||"",(lp!=null&&cp>0&&lp<cp)?Math.round((1-lp/cp)*100)+"%":"",r.st].join(",")); });
+    download("liquidacion.csv",L.join("\n"));
+  });
+
   /* ---------- helpers ---------- */
   function csv(v){ v=(v==null?"":v.toString()); return /[",\n;]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v; }
   function download(name,content){
@@ -832,19 +1286,21 @@
     const need=ITEMS.map(needOf).filter(n=>n!=null&&n>0).length;
     $("#nOrden").textContent=need;
     $("#nWa").textContent=need?Object.keys(orderByProv()).length:0;
+    $("#nRot").textContent=rotBadge();
     $("#statechip").innerHTML = ITEMS.length
       ? `<b>${ITEMS.length}</b> artículos · <b>${need}</b> a reponer`
       : "Sin datos cargados";
   }
 
-  function renderAll(){ renderPiso(); renderProv(); renderOrden(); renderWa(); updateBadges(); }
+  function renderAll(){ renderPiso(); renderProv(); renderOrden(); renderWa(); renderRot(); updateBadges(); }
 
   /* ---------- tabs ---------- */
   function switchTab(name){
     $$("#tabs button").forEach(b=>b.classList.toggle("active",b.dataset.tab===name));
-    ["cargar","piso","prov","orden","wa"].forEach(t=>$("#tab-"+t).classList.toggle("hidden",t!==name));
+    ["cargar","piso","prov","orden","wa","rot"].forEach(t=>$("#tab-"+t).classList.toggle("hidden",t!==name));
     if(name==="orden")renderOrden();
     if(name==="wa")renderWa();
+    if(name==="rot")renderRot();
   }
   $$("#tabs button").forEach(b=>b.addEventListener("click",()=>switchTab(b.dataset.tab)));
 
@@ -886,7 +1342,7 @@
       piso: Object.entries(piso).map(([sku,p])=>({ sku, nombre:(pisoMeta[sku]&&pisoMeta[sku].n)||"", marca:(pisoMeta[sku]&&pisoMeta[sku].m)||"", piso:p })),
       prov: Object.entries(provMap).map(([k,pr])=>({ marca:(brandDisplay[k]||k), proveedor:pr })),
       pedir: Object.entries(pedir).map(([sku,q])=>({ sku, pedir:q })),
-      config: Object.assign({ map: localStorage.getItem(LS_MAP)||"", watpl:JSON.stringify(waTpl), watplprov:JSON.stringify(waTplProv), wadatos:JSON.stringify(waDatos) }, Object.fromEntries(Object.entries(provPhone).map(([p,t])=>["tel:"+p,t])))
+      config: Object.assign({ map: localStorage.getItem(LS_MAP)||"", watpl:JSON.stringify(waTpl), watplprov:JSON.stringify(waTplProv), wadatos:JSON.stringify(waDatos), rotcfg:JSON.stringify(rotCfg) }, Object.fromEntries(Object.entries(provPhone).map(([p,t])=>["tel:"+p,t])))
     }};
   }
 
@@ -946,6 +1402,7 @@
         if(data.config.watpl){ try{ const t=JSON.parse(data.config.watpl); if(t&&(t.body!=null||t.line!=null)){ waTpl={body:t.body!=null?t.body:DEFAULT_WA_BODY,line:t.line!=null?t.line:DEFAULT_WA_LINE}; save(LS_WATPL,waTpl); } }catch(e){} }
         if(data.config.watplprov){ try{ const tp=JSON.parse(data.config.watplprov); if(tp&&typeof tp==="object"){ waTplProv=tp; save(LS_WATPLPROV,waTplProv); } }catch(e){} }
         if(data.config.wadatos){ try{ const d=JSON.parse(data.config.wadatos); if(d&&typeof d==="object"){ waDatos={direccion:d.direccion||"",cuit:d.cuit||"",horario:d.horario||""}; save(LS_WADATOS,waDatos); } }catch(e){} }
+        if(data.config.rotcfg){ try{ const rc=JSON.parse(data.config.rotcfg); if(rc&&typeof rc==="object"){ rotCfg=Object.assign({},ROT_DEF,rc); if(!rotCfg.leadProv||typeof rotCfg.leadProv!=="object")rotCfg.leadProv={}; if(!rotCfg.excl||typeof rotCfg.excl!=="object")rotCfg.excl={}; save(LS_ROTCFG,rotCfg); } }catch(e){} }
         const pt={}; Object.keys(data.config).forEach(kk=>{ if(kk.indexOf("tel:")===0){ const p=kk.slice(4); const v=(data.config[kk]||"").toString().trim(); if(p&&v) pt[p]=v; } });
         if(Object.keys(pt).length){ provPhone=pt; save(LS_PROVTEL,provPhone); }
       }
