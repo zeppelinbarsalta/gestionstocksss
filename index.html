@@ -973,9 +973,16 @@
   buildSales();
 
   // claves de venta de un artículo: SKU + nombre con variante (ventas sin SKU)
-  let NAMECOUNT={};
+  let NAMECOUNT={}, EXTRA={};
+  // SKUs vendidos que ya no existen en el stock (SKU cambiado o recodificado): se reasignan por nombre del producto
+  function buildExtra(){
+    EXTRA={}; if(!SALES||!VENTAS||!VENTAS.names) return;
+    const skuSet=new Set(ITEMS.map(it=>it.sku)), byName={};
+    ITEMS.forEach(it=>{ const full=norm(it.name+(it.vname?" ("+it.vname+")":"")); if(!byName[full]) byName[full]=it.sku; if((!it.vname||NAMECOUNT[norm(it.name)]===1) && !byName[norm(it.name)]) byName[norm(it.name)]=it.sku; });
+    Object.keys(SALES).forEach(k=>{ if(k.indexOf("n:")===0||skuSet.has(k)) return; const n=VENTAS.names[k]; const sku=n&&byName[n]; if(sku) (EXTRA[sku]=EXTRA[sku]||[]).push(k); });
+  }
   function itemKeys(it){
-    const ks=new Set();
+    const ks=new Set(EXTRA[it.sku]||[]);
     if(it.sku && it.sku.indexOf("row-")!==0) ks.add(it.sku);
     const full=norm(it.name+(it.vname?" ("+it.vname+")":""));
     ks.add("n:"+full);
@@ -1047,7 +1054,7 @@
     if(iS<0&&iN<0){ toast("Elegí SKU o nombre del producto."); return; }
     const cell=(r,i)=>i>=0?((r[i]||"").trim()):"";
     const ord={}; let lastCtx=null;
-    const agg={}; const orders=new Set(); const payVals={};
+    const agg={}; const orders=new Set(); const payVals={}; const names={};
     let nCancel=0,nUnpaid=0,nBranch=0,nLines=0,units=0,desde=null,hasta=null;
     ROT_RAW.forEach(r=>{
       const on=cell(r,iO), dStr=cell(r,iD);
@@ -1061,13 +1068,14 @@
       if(iB>=0 && bVal!=="__all" && ctx.br!==bVal){ nBranch++; return; }
       const sku=cell(r,iS), nm=cell(r,iN);
       const key = sku ? sku : (nm ? "n:"+norm(nm) : null); if(!key) return;
+      if(sku && nm && !names[sku]) names[sku]=norm(nm);
       const ak=key+"\u0001"+ctx.day; agg[ak]=(agg[ak]||0)+q;
       nLines++; units+=q; if(on) orders.add(on);
       if(desde==null||ctx.day<desde) desde=ctx.day; if(hasta==null||ctx.day>hasta) hasta=ctx.day;
     });
     if(!nLines){ toast("No quedó ninguna venta válida. Revisá el mapeo."); return; }
     const lines=Object.entries(agg).map(([k,q])=>{ const p=k.split("\u0001"); return [p[0],+p[1],q]; });
-    VENTAS={ meta:{desde,hasta,ordenes:orders.size,lineas:nLines,unidades:units,cancel:nCancel,impagas:nUnpaid,otraSucursal:nBranch,archivo:rotFileName,cargado:Date.now(),pagos:payVals}, lines };
+    VENTAS={ meta:{desde,hasta,ordenes:orders.size,lineas:nLines,unidades:units,cancel:nCancel,impagas:nUnpaid,otraSucursal:nBranch,archivo:rotFileName,cargado:Date.now(),pagos:payVals}, lines, names };
     try{ localStorage.setItem(LS_VENTAS,JSON.stringify(VENTAS)); }catch(e){ toast("No entró en el almacenamiento del navegador."); }
     buildSales();
     $("#rotMapArea").classList.add("hidden");
@@ -1102,6 +1110,7 @@
   let ROT_ROWS=[], LIQ_ROWS=[];
   function rotCompute(){
     NAMECOUNT={}; ITEMS.forEach(it=>{ const k=norm(it.name); NAMECOUNT[k]=(NAMECOUNT[k]||0)+1; });
+    buildExtra();
     ROT_ROWS = ITEMS.map(it=>Object.assign({it},statsOf(it)));
   }
   function renderRot(){
@@ -1122,7 +1131,7 @@
     if(ITEMS.length){
       const claimed=new Set(); ROT_ROWS.forEach(r=>itemKeys(r.it).forEach(k=>claimed.add(k)));
       let uM=0,uT=0; Object.entries(SALES).forEach(([k,arr])=>{ const u=arr.reduce((s,x)=>s+x[1],0); uT+=u; if(claimed.has(k)) uM+=u; });
-      sum+=` Cruce con el stock: ${uT?Math.round(uM/uT*100):0}% de las unidades vendidas encontraron su artículo (el resto son productos borrados o sin SKU).`;
+      sum+=` Cruce con el stock: ${uT?Math.round(uM/uT*100):0}% de las unidades vendidas encontraron su artículo (el resto son productos borrados o que cambiaron de nombre y de SKU). Los SKU viejos se reasignan por nombre.`;
     }
     if(span<rotCfg.liq) sum+=` ⚠ El archivo cubre menos de ${rotCfg.liq} días: lo que nunca se vendió queda en "Alerta" y no en "Liquidar". Exportá 12 meses.`;
     $("#rotSummary").textContent=sum;
